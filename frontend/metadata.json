@@ -1,0 +1,6 @@
+{
+  "name": "EventLogistics",
+  "description": "Sistema de gestão de estoque e vendas de tickets para festivais e eventos em tempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
