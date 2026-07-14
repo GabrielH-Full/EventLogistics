@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   XCircle, 
   ChevronRight, 
-  UtensilsCrossed, 
+  UtensilsCrossed,
+  Lollipop,
   Flame, 
   TrendingUp, 
   Ticket as TicketIcon 

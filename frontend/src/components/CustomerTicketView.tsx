@@ -53,6 +53,7 @@ export default function CustomerTicketView({
 
   const totalAmount = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
 
+
   return (
     <div className="flex flex-col min-h-screen pb-48">
       {/* Top App Bar */}
@@ -73,7 +74,7 @@ export default function CustomerTicketView({
         </div>
       </header>
 
-      {/* Main Content Area */}
+        {/* Main Content Area */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
         {/* Search & Filter Section */}
         <section className="mb-6 space-y-4">
@@ -91,7 +92,7 @@ export default function CustomerTicketView({
               id="product-search-input"
             />
             {searchQuery && (
-              <button 
+              <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 font-medium"
               >

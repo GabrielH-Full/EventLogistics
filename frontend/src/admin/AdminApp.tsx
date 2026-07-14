@@ -82,6 +82,7 @@ export default function AdminApp() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {/*
             <button
               onClick={() => setTab('sell')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
@@ -91,6 +92,7 @@ export default function AdminApp() {
               <Store className="w-3.5 h-3.5" />
               <span>Vender Ticket</span>
             </button>
+            */} {/*button venda de ticket*/}
             <button
               onClick={() => setTab('dashboard')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
