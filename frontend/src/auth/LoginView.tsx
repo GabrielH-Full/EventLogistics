@@ -30,7 +30,7 @@ export default function LoginView() {
           <div className="bg-[#0066ff] p-3 rounded-2xl text-white mb-3">
             <LogIn className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-black text-[#191b24] tracking-tight">EventLogistics</h1>
+          <h1 className="text-xl font-black text-[#191b24] tracking-tight">Logistica de Eventos</h1>
           <p className="text-xs text-gray-400 font-medium mt-1 text-center">
             Entre com a conta do Caixa Central ou da sua barraca
           </p>

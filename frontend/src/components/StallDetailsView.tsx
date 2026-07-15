@@ -20,15 +20,15 @@ import { div } from 'motion/react-m';
 interface StallDetailsViewProps {
     stallId: string;
     stallName: string;
-    products: Product[];
+    productId: Product[];
     tickets: Ticket[];
     onBack: () => void;
 }
 
-export default function StallDetailsView({ stallId, stallName, products, tickets, onBack }: StallDetailsViewProps) {
+export default function StallDetailsView({stallId, stallName, productId, tickets, onBack }: StallDetailsViewProps) {
     const [productionAnimation, setProductionAnimation] = useState<{[key: string]: boolean}>({});
 
-     const stallProducts = products.filter(p => p.stallId === stallId);
+     const stallProducts = productId.filter(p => p.stallId === stallId);
     const stallProductIds = new Set(stallProducts.map(p => p.id));
 
   // Compute stats dynamically for this specific stall

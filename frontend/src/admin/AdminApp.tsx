@@ -7,7 +7,6 @@ import { useAppData } from '../api/useAppData';
 import { api, ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Product } from '../types';
-import { s } from 'motion/react-client';
 
 type Tab = 'sell' | 'dashboard';
 
@@ -132,8 +131,8 @@ export default function AdminApp() {
           <StallDetailsView
           stallId={selectedStallId}
           stallName={stalls.find(s => s.id === selectedStallId)?.name || ''}
-          products={products.filter(p => p.stallId === selectedStallId)}
-          tickets={tickets.filter(t => t.stallId === selectedStallId)} {/* Passa apenas os tickets da barraca selecionada, CONCERTAR NAO ESTA FUNCIONANDO */}
+          productId={products}
+          tickets={tickets}
           onBack={() => setSelectedStallId(null)}
           />
         )

@@ -24,7 +24,6 @@ interface CentralDashboardViewProps {
 }
 
 type GlobalFilter = 'all' | 'alerts' | 'out_of_stock';
-type StallIconType = 'bakery_dining' | 'outdoor_grill' | 'local_candy';
 
 export default function CentralDashboardView({
   products,
