@@ -13,7 +13,7 @@ export interface Product {
 export interface Stall {
   id: string;
   name: string;
-  icon: 'bakery_dining' | 'outdoor_grill' ;
+  icon: 'bakery_dining' | 'outdoor_grill' | 'local_candy';
 }
 
 export interface TicketItem {
