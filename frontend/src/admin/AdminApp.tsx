@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Store, LayoutDashboard, LogOut, AlertCircle } from 'lucide-react';
 import CustomerTicketView from '../components/CustomerTicketView';
 import CentralDashboardView from '../components/CentralDashboardView';
+import StallDetailsView from '../components/StallDetailsView';
 import { useAppData } from '../api/useAppData';
 import { api, ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -16,6 +17,7 @@ export default function AdminApp() {
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [selectedStallId, setSelectedStallId] = useState<string | null>(null);
 
   const handleAddToCart = (product: Product) => {
     if (product.stock <= 0) return;
@@ -82,6 +84,7 @@ export default function AdminApp() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {/*
             <button
               onClick={() => setTab('sell')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
@@ -91,6 +94,7 @@ export default function AdminApp() {
               <Store className="w-3.5 h-3.5" />
               <span>Vender Ticket</span>
             </button>
+            */} {/*button venda de ticket*/}
             <button
               onClick={() => setTab('dashboard')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
@@ -123,18 +127,28 @@ export default function AdminApp() {
           <div className="flex items-center justify-center py-24 text-gray-400 text-sm font-semibold">
             Carregando dados do servidor...
           </div>
-        ) : tab === 'sell' ? (
-          <CustomerTicketView
-            products={products}
-            cart={cart}
-            onAddToCart={handleAddToCart}
-            onRemoveFromCart={handleRemoveFromCart}
-            onUpdateCartQuantity={handleUpdateCartQuantity}
-            onCheckout={handleCheckout}
-            checkoutStatus={checkoutStatus}
+        ) : selectedStallId ? (
+          <StallDetailsView
+          stallId={selectedStallId}
+          stallName={stalls.find(s => s.id === selectedStallId)?.name || ''}
+          productId={products}
+          tickets={tickets}
+          onBack={() => setSelectedStallId(null)}
           />
-        ) : (
-          <CentralDashboardView products={products} tickets={tickets} stalls={stalls} />
+        )
+        //: tab === 'sell' ? (
+        //  <CustomerTicketView
+        //    products={products}
+        //    cart={cart}
+       //    onAddToCart={handleAddToCart}
+        //    onRemoveFromCart={handleRemoveFromCart}
+        //    onUpdateCartQuantity={handleUpdateCartQuantity}
+        //    onCheckout={handleCheckout}
+        //    checkoutStatus={checkoutStatus}
+        //  />
+       // ) 
+        : (
+          <CentralDashboardView products={products} tickets={tickets} stalls={stalls} onSelectStall={setSelectedStallId} />
         )}
       </div>
     </div>

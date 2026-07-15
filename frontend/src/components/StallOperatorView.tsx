@@ -11,7 +11,8 @@ import {
   UtensilsCrossed,
   Sparkles,
   RefreshCw,
-  Clock
+  Clock,
+  Candy
 } from 'lucide-react';
 
 interface StallOperatorViewProps {

@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   XCircle, 
   ChevronRight, 
-  UtensilsCrossed, 
+  UtensilsCrossed,
+  Candy,
   Flame, 
   TrendingUp, 
   Ticket as TicketIcon 
@@ -19,6 +20,7 @@ interface CentralDashboardViewProps {
   products: Product[];
   tickets: Ticket[];
   stalls: Stall[];
+  onSelectStall: (stallId: string) => void;
 }
 
 type GlobalFilter = 'all' | 'alerts' | 'out_of_stock';
@@ -26,7 +28,8 @@ type GlobalFilter = 'all' | 'alerts' | 'out_of_stock';
 export default function CentralDashboardView({
   products,
   tickets,
-  stalls
+  stalls,
+  onSelectStall
 }: CentralDashboardViewProps) {
   const [filter, setFilter] = useState<GlobalFilter>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -57,7 +60,7 @@ export default function CentralDashboardView({
           <div className="bg-[#0050cb] p-2 rounded-lg text-white">
             <LayoutDashboard className="w-5 h-5" />
           </div>
-          <h1 className="text-xl font-black text-[#0050cb] tracking-tight">EventLogistics</h1>
+          <h1 className="text-xl font-black text-[#0050cb] tracking-tight">Logistica de Eventos</h1>
         </div>
         <div className="flex items-center gap-4">
           <button className="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
@@ -204,16 +207,24 @@ export default function CentralDashboardView({
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="dashboard-stall-grid">
           {stalls.map((stall) => {
             const stallProducts = renderStallProducts(stall.id);
-            const StallIcon = stall.icon === 'outdoor_grill' ? Flame : UtensilsCrossed;
+
+            const STALL_ICONS: Record<Stall['icon'], typeof Flame> = {
+              bakery_dining: UtensilsCrossed,
+              outdoor_grill: Flame,
+              local_candy: Candy
+            };
+            const StallIcon = STALL_ICONS[stall.icon];
+
 
             return (
-              <div key={stall.id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col border border-gray-100">
+              <div key={stall.id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col border border-gray-100 cursor-pointer hover:opacity-80 transition-opacity" 
+              onClick={() => onSelectStall(stall.id)}>
                 <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                   <div className="flex items-center gap-3">
                     <div className="bg-blue-100 p-2 rounded-xl text-[#0050cb]">
                       <StallIcon className="w-5 h-5" />
                     </div>
-                    <h3 className="font-extrabold text-base text-[#191b24]">{stall.name}</h3>
+                    <h3 className="font-extrabold text-base text-[#0050cb]">{stall.name}</h3>
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
