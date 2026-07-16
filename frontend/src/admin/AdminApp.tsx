@@ -1,75 +1,50 @@
 import React, { useState } from 'react';
-import { Store, LayoutDashboard, LogOut, AlertCircle } from 'lucide-react';
-import CustomerTicketView from '../components/CustomerTicketView';
+import { LayoutDashboard, LogOut, AlertCircle } from 'lucide-react';
+import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import CentralDashboardView from '../components/CentralDashboardView';
 import StallDetailsView from '../components/StallDetailsView';
 import { useAppData } from '../api/useAppData';
-import { api, ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import { Product } from '../types';
+import { Product, Ticket, Stall } from '../types';
 
-type Tab = 'sell' | 'dashboard';
+/** Tela de detalhes de uma barraca específica, resolvida a partir do :stallId da URL. */
+function StallDetailsRoute({
+  stalls,
+  products,
+  tickets,
+}: {
+  stalls: Stall[];
+  products: Product[];
+  tickets: Ticket[];
+}) {
+  const { stallId } = useParams<{ stallId: string }>();
+  const navigate = useNavigate();
+  const stall = stalls.find(s => s.id === stallId);
+
+  return (
+    <StallDetailsView
+      stallId={stallId || ''}
+      stallName={stall?.name || ''}
+      productId={products}
+      tickets={tickets}
+      onBack={() => navigate('/admin/dashboard')}
+    />
+  );
+}
 
 export default function AdminApp() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { products, tickets, stalls, loading } = useAppData();
-  const [tab, setTab] = useState<Tab>('sell');
+
+  // Estado do carrinho é mantido aqui pois pertence à venda de tickets
+  // (aba "Vender Ticket", atualmente desativada - ver rota comentada abaixo).
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
-  const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [selectedStallId, setSelectedStallId] = useState<string | null>(null);
 
-  const handleAddToCart = (product: Product) => {
-    if (product.stock <= 0) return;
-    setCart(prev => {
-      const currentQty = prev[product.id] || 0;
-      if (currentQty >= product.stock) return prev;
-      return { ...prev, [product.id]: currentQty + 1 };
-    });
-  };
-
-  const handleRemoveFromCart = (productId: string) => {
-    setCart(prev => {
-      const copy = { ...prev };
-      delete copy[productId];
-      return copy;
-    });
-  };
-
-  const handleUpdateCartQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      handleRemoveFromCart(productId);
-      return;
-    }
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    setCart(prev => ({ ...prev, [productId]: Math.min(quantity, product.stock) }));
-  };
-
-  const handleCheckout = async () => {
-    if (Object.keys(cart).length === 0) return;
-
-    setCheckoutStatus('processing');
-    setCheckoutError(null);
-
-    const items = Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity: quantity as number }));
-
-    try {
-      // Toda a regra de negócio (checar estoque, debitar, criar o ticket) roda
-      // no backend. A tela só reflete o resultado - por isso é seguro mesmo
-      // se dois caixas tentarem vender o último item ao mesmo tempo.
-      await api.createTicket(items);
-      setCheckoutStatus('success');
-      setTimeout(() => {
-        setCart({});
-        setCheckoutStatus('idle');
-      }, 2000);
-    } catch (err) {
-      setCheckoutStatus('idle');
-      setCheckoutError(err instanceof ApiError ? err.message : 'Falha ao registrar a venda.');
-      setTimeout(() => setCheckoutError(null), 5000);
-    }
-  };
+  const isDashboardArea =
+    location.pathname.startsWith('/admin/dashboard') || location.pathname.startsWith('/admin/stalls');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -86,9 +61,9 @@ export default function AdminApp() {
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             {/*
             <button
-              onClick={() => setTab('sell')}
+              onClick={() => navigate('sell')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                tab === 'sell' ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                location.pathname.startsWith('/admin/sell') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
               }`}
             >
               <Store className="w-3.5 h-3.5" />
@@ -96,9 +71,9 @@ export default function AdminApp() {
             </button>
             */} {/*button venda de ticket*/}
             <button
-              onClick={() => setTab('dashboard')}
+              onClick={() => navigate('/admin/dashboard')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                tab === 'dashboard' ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                isDashboardArea ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
@@ -127,28 +102,42 @@ export default function AdminApp() {
           <div className="flex items-center justify-center py-24 text-gray-400 text-sm font-semibold">
             Carregando dados do servidor...
           </div>
-        ) : selectedStallId ? (
-          <StallDetailsView
-          stallId={selectedStallId}
-          stallName={stalls.find(s => s.id === selectedStallId)?.name || ''}
-          productId={products}
-          tickets={tickets}
-          onBack={() => setSelectedStallId(null)}
-          />
-        )
-        //: tab === 'sell' ? (
-        //  <CustomerTicketView
-        //    products={products}
-        //    cart={cart}
-       //    onAddToCart={handleAddToCart}
-        //    onRemoveFromCart={handleRemoveFromCart}
-        //    onUpdateCartQuantity={handleUpdateCartQuantity}
-        //    onCheckout={handleCheckout}
-        //    checkoutStatus={checkoutStatus}
-        //  />
-       // ) 
-        : (
-          <CentralDashboardView products={products} tickets={tickets} stalls={stalls} onSelectStall={setSelectedStallId} />
+        ) : (
+          <Routes>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route
+              path="dashboard"
+              element={
+                <CentralDashboardView
+                  products={products}
+                  tickets={tickets}
+                  stalls={stalls}
+                  onSelectStall={(stallId: string) => navigate(`/admin/stalls/${stallId}`)}
+                />
+              }
+            />
+            <Route
+              path="stalls/:stallId"
+              element={<StallDetailsRoute stalls={stalls} products={products} tickets={tickets} />}
+            />
+            {/*
+            <Route
+              path="sell"
+              element={
+                <CustomerTicketView
+                  products={products}
+                  cart={cart}
+                  onAddToCart={handleAddToCart}
+                  onRemoveFromCart={handleRemoveFromCart}
+                  onUpdateCartQuantity={handleUpdateCartQuantity}
+                  onCheckout={handleCheckout}
+                  checkoutStatus={checkoutStatus}
+                />
+              }
+            />
+            */}
+            <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+          </Routes>
         )}
       </div>
     </div>

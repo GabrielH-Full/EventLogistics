@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { UtensilsCrossed, QrCode, LogOut } from 'lucide-react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import StallOperatorView from '../components/StallOperatorView';
 import SalesValidatorView from '../components/SalesValidatorView';
 import { useAppData } from '../api/useAppData';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
-type Tab = 'production' | 'validate';
-
 export default function StallApp() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { products, tickets, loading } = useAppData();
-  const [tab, setTab] = useState<Tab>('production');
 
   const stallId = user!.stallId!;
   const stallName = user!.displayName;
@@ -36,6 +36,9 @@ export default function StallApp() {
     api.validateTicket(ticketId).catch(err => alert(err.message || 'Erro ao validar ticket.'));
   };
 
+  const isProduction = location.pathname.startsWith('/stall/production');
+  const isValidate = location.pathname.startsWith('/stall/validate');
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Barra superior fixa da conta da barraca */}
@@ -50,18 +53,18 @@ export default function StallApp() {
 
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             <button
-              onClick={() => setTab('production')}
+              onClick={() => navigate('/stall/production')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                tab === 'production' ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                isProduction ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
               }`}
             >
               <UtensilsCrossed className="w-3.5 h-3.5" />
               <span>Produção / Estoque</span>
             </button>
             <button
-              onClick={() => setTab('validate')}
+              onClick={() => navigate('/stall/validate')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                tab === 'validate' ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                isValidate ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
               }`}
             >
               <QrCode className="w-3.5 h-3.5" />
@@ -83,22 +86,35 @@ export default function StallApp() {
           <div className="flex items-center justify-center py-24 text-gray-400 text-sm font-semibold">
             Carregando dados do servidor...
           </div>
-        ) : tab === 'production' ? (
-          <StallOperatorView
-            stallId={stallId}
-            stallName={stallName}
-            products={stallProducts}
-            tickets={stallTickets}
-            onAddProduction={handleAddProduction}
-            onResetStallStock={handleResetStallStock}
-          />
         ) : (
-          <SalesValidatorView
-            stallName={stallName}
-            products={stallProducts}
-            tickets={stallTickets}
-            onValidateTicket={handleValidateTicket}
-          />
+          <Routes>
+            <Route index element={<Navigate to="/stall/production" replace />} />
+            <Route
+              path="production"
+              element={
+                <StallOperatorView
+                  stallId={stallId}
+                  stallName={stallName}
+                  products={stallProducts}
+                  tickets={stallTickets}
+                  onAddProduction={handleAddProduction}
+                  onResetStallStock={handleResetStallStock}
+                />
+              }
+            />
+            <Route
+              path="validate"
+              element={
+                <SalesValidatorView
+                  stallName={stallName}
+                  products={stallProducts}
+                  tickets={stallTickets}
+                  onValidateTicket={handleValidateTicket}
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="/stall/production" replace />} />
+          </Routes>
         )}
       </div>
     </div>
