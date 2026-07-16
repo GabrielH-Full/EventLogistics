@@ -142,10 +142,9 @@ export default function CentralDashboardView({
             <div className="bg-[#ffb95f]/15 border border-[#ffb95f]/40 p-5 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] transition-all hover:translate-y-[-2px]">
               <div className="flex justify-between items-start">
                 <AlertTriangle className="w-6 h-6 text-[#a06500]" />
-                <div className="flex -space-x-1.5">
-                  <div className="w-5 h-5 rounded-full bg-yellow-600 border border-amber-200"></div>
-                  <div className="w-5 h-5 rounded-full bg-yellow-500 border border-amber-200 opacity-60"></div>
-                </div>
+                <span className="bg-[#ffddb8] text-[#7f4f00] px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase">
+                  Alerta
+                </span>
               </div>
               <div className="mt-3">
                 <p className="text-xs font-bold text-amber-900/80 uppercase tracking-widest">Alertas Ativos</p>
@@ -291,7 +290,6 @@ export default function CentralDashboardView({
           <div className="relative bg-[#2e303a] rounded-2xl overflow-hidden min-h-[220px] md:min-h-[260px] group transition-all duration-300 hover:scale-[1.01] shadow-md border border-gray-800">
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-55 group-hover:opacity-40 transition-opacity duration-500" 
-              referrerPolicy="no-referrer"
               style={{ backgroundImage: `url('${IMAGES.festival}')` }}
             ></div>
             <div className="absolute inset-0 bg-gradient-to-t from-[#2e303a] via-[#2e303a]/20 to-transparent"></div>
