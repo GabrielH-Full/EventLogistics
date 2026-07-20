@@ -2,11 +2,12 @@
   "name": "eventlogistics-backend",
   "version": "1.0.0",
   "description": "API + WebSocket central para o sistema de estoque/tickets do festival",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -15,5 +16,14 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "ts-node-dev": "^2.0.0",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.14.9",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6"
   }
 }

@@ -1,13 +1,13 @@
-require('dotenv').config();
-const http = require('http');
-const express = require('express');
-const cors = require('cors');
+import 'dotenv/config';
+import http from 'http';
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
 
-const authRoutes = require('./routes/authRoutes');
-const stateRoutes = require('./routes/stateRoutes');
-const ticketRoutes = require('./routes/ticketRoutes');
-const productRoutes = require('./routes/productRoutes');
-const { initSocket } = require('./socket');
+import authRoutes from './routes/authRoutes';
+import stateRoutes from './routes/stateRoutes';
+import ticketRoutes from './routes/ticketRoutes';
+import productRoutes from './routes/productRoutes';
+import { initSocket } from './socket';
 
 const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
@@ -16,16 +16,16 @@ const app = express();
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.get('/api/health', (req: Request, res: Response) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/state', stateRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api', productRoutes); // /api/products/:id/production e /api/stalls/:stallId/reset
 
-app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
+app.use((req: Request, res: Response) => res.status(404).json({ error: 'Rota não encontrada.' }));
+
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
   res.status(500).json({ error: 'Erro interno do servidor.' });
 });

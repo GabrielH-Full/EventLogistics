@@ -1,8 +1,11 @@
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
+import { Product, Stall, Ticket } from './types/domain';
+import { User } from './types/auth';
+import { AppState } from './types/domain';
 
 // Mesma base de dados que existia em src/data.ts no frontend, agora vivendo
 // no backend, que é a fonte única de verdade.
-const INITIAL_PRODUCTS = [
+const INITIAL_PRODUCTS: Product[] = [
   { id: 'pastel_carne', name: 'Pastel de Carne', category: 'Salgados', price: 10.0, stock: 45, maxStock: 100, unit: '100g', stallId: 'pastel', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&q=80&w=400' },
   { id: 'pastel_queijo', name: 'Pastel de Queijo', category: 'Salgados', price: 10.0, stock: 12, maxStock: 100, unit: '100g', stallId: 'pastel', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&q=80&w=400' },
   { id: 'caldo_cana', name: 'Caldo de Cana', category: 'Bebidas', price: 8.0, stock: 0, maxStock: 50, unit: '300ml', stallId: 'pastel', image: 'https://images.unsplash.com/photo-1622597489100-8d3a5a9d0b1c?auto=format&fit=crop&q=80&w=400' },
@@ -12,13 +15,13 @@ const INITIAL_PRODUCTS = [
   { id: 'brigadeiro_colher', name: 'Brigadeiro Gourmet', category: 'Doces', price: 5.0, stock: 75, maxStock: 100, unit: 'unid', stallId: 'doces', image: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&q=80&w=400' }
 ];
 
-const INITIAL_STALLS = [
+const INITIAL_STALLS: Stall[] = [
   { id: 'pastel', name: 'Barraca do Pastel', icon: 'bakery_dining' },
   { id: 'churrasco', name: 'Barraca do Churrasco', icon: 'outdoor_grill' },
   { id: 'doces', name: 'Barraca de Doces', icon: 'bakery_dining' }
 ];
 
-const INITIAL_TICKETS = [
+const INITIAL_TICKETS: Ticket[] = [
   {
     id: 't1', code: '#8492',
     items: [{ productId: 'pastel_carne', name: 'Pastel de Carne', category: 'Salgados', price: 10.0, quantity: 2 }],
@@ -49,7 +52,7 @@ const INITIAL_TICKETS = [
 // Usuários de demonstração. TROQUE AS SENHAS antes de usar em produção.
 // role: 'admin' -> acesso ao Caixa Central (venda de tickets + dashboard)
 // role: 'stall' -> acesso restrito à própria barraca (produção + validação)
-function buildInitialUsers() {
+function buildInitialUsers(): User[] {
   const plainPasswords = {
     admin: 'admin123',
     pastel: 'pastel123',
@@ -93,7 +96,7 @@ function buildInitialUsers() {
   ];
 }
 
-function buildInitialState() {
+export function buildInitialState(): AppState {
   return {
     products: INITIAL_PRODUCTS.map(p => ({ ...p })),
     stalls: INITIAL_STALLS.map(s => ({ ...s })),
@@ -101,5 +104,3 @@ function buildInitialState() {
     users: buildInitialUsers()
   };
 }
-
-module.exports = { buildInitialState };

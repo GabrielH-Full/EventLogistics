@@ -1,12 +1,17 @@
-const express = require('express');
-const { state } = require('../db');
-const { checkPassword, signToken } = require('../auth');
-const { requireAuth } = require('../middleware');
+import { Router, Request, Response } from 'express';
+import { state } from '../db';
+import { checkPassword, signToken } from '../auth';
+import { requireAuth } from '../middleware';
 
-const router = express.Router();
+const router = Router();
+
+interface LoginBody {
+  username?: string;
+  password?: string;
+}
 
 // POST /api/auth/login { username, password }
-router.post('/login', (req, res) => {
+router.post('/login', (req: Request<{}, {}, LoginBody>, res: Response) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -33,8 +38,8 @@ router.post('/login', (req, res) => {
 
 // GET /api/auth/me -> valida o token salvo e devolve os dados do usuário,
 // usado para manter a sessão ao recarregar a página.
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, (req: Request, res: Response) => {
   res.json({ user: req.user });
 });
 
-module.exports = router;
+export default router;

@@ -1,0 +1,34 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
+const http_1 = __importDefault(require("http"));
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
+const stateRoutes_1 = __importDefault(require("./routes/stateRoutes"));
+const ticketRoutes_1 = __importDefault(require("./routes/ticketRoutes"));
+const productRoutes_1 = __importDefault(require("./routes/productRoutes"));
+const socket_1 = require("./socket");
+const PORT = process.env.PORT || 4000;
+const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
+const app = (0, express_1.default)();
+app.use((0, cors_1.default)({ origin: CORS_ORIGIN, credentials: true }));
+app.use(express_1.default.json());
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.use('/api/auth', authRoutes_1.default);
+app.use('/api/state', stateRoutes_1.default);
+app.use('/api/tickets', ticketRoutes_1.default);
+app.use('/api', productRoutes_1.default); // /api/products/:id/production e /api/stalls/:stallId/reset
+app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+});
+const httpServer = http_1.default.createServer(app);
+(0, socket_1.initSocket)(httpServer, CORS_ORIGIN);
+httpServer.listen(PORT, () => {
+    console.log(`EventLogistics backend rodando em http://localhost:${PORT}`);
+});
