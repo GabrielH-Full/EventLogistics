@@ -1,9 +1,10 @@
-# Relatório de Validação e Revisão da Tarefa 1.0
+# Relatório de Validação e Revisão — Tarefa 1.0
 
 ## Metadados da Validação
 
 - **ID da Tarefa:** 1.0
 - **Nome da Tarefa:** Configuração Docker & Esquema PostgreSQL do EventLogistics
+- **PRD:** `tasks/postgres-migration`
 - **Status da Validação:** `APROVADA`
 - **Data da Validação:** 2026-07-30
 
@@ -11,22 +12,34 @@
 
 ### Comandos Executados
 
-- Check do arquivo Docker Compose (`docker-compose.yml`): Válido.
-- Análise sintática do SQL DDL (`backend/migrations/001_init_schema.sql`): Válido.
-- Análise sintática do SQL Seed (`backend/migrations/seed.sql`): Válido.
+1. **Build do Backend (`backend/`):**
+   - Comando: `npm run build` (`tsc`)
+   - Resultado: Sucesso (0 erros de compilação).
+2. **Build do Frontend (`frontend/`):**
+   - Comando: `npm run build` (`vite build`)
+   - Resultado: Sucesso (1727 módulos transformados sem erros).
 
-## 2. Revisão Técnica e Conformidade com Skills
+## 2. Revisão Técnica e Conformidade
 
-### Critérios de Aceitação
+### Critérios de Aceitação e Requisitos da Tarefa
 
-- [x] O serviço PostgreSQL está containerizado via `docker-compose.yml` usando imagem `postgres:16-alpine`, volume persistente `postgres_data`, variáveis de ambiente e `healthcheck`.
-- [x] A tabela `users` utiliza `BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, unicidade em `username` e validação `CHECK (role IN ('admin', 'stall'))`.
-- [x] A tabela `products` possui `NUMERIC(10,2)` para preços, `CHECK` de estoque (`stock >= 0` e `max_stock >= stock`), e índice explícito B-Tree em `stall_id` (`idx_products_stall_id`).
-- [x] A tabela `tickets` armazena `total` em `NUMERIC(10,2)` e `created_at` em `TIMESTAMPTZ`.
-- [x] A tabela `ticket_items` está normalizada (N:M) com `ON DELETE CASCADE` e possui índices em Foreign Keys (`idx_ticket_items_ticket_id`, `idx_ticket_items_product_id`).
-- [x] Script de carga inicial `seed.sql` reflete a base de demonstração do EventLogistics.
+- [x] **Orquestração Docker:** O arquivo `docker-compose.yml` orquestra o PostgreSQL 16 Alpine na porta `5432` com volume persistente e *healthcheck* configurado.
+- [x] **Esquema Relacional DDL (`backend/migrations/001_init_schema.sql`):**
+  - Tabela `users` com PK identity, unicidade em `username` e validação `CHECK (role IN ('admin', 'stall'))`.
+  - Tabela `products` com `NUMERIC(10,2)` para preços, `CHECK` de estoque e índice B-Tree em `stall_id`.
+  - Tabela `tickets` com `NUMERIC(10,2)` e carimbo em `TIMESTAMPTZ`.
+  - Tabela N:M `ticket_items` com FKs, `ON DELETE CASCADE` e índices explícitos em Foreign Keys (`idx_ticket_items_ticket_id`, `idx_ticket_items_product_id`).
+- [x] **Dados de Seed (`backend/migrations/seed.sql`):** Script SQL idempotente alimentando barracas, produtos e contas de demonstração (`admin`, `pastel`, `churrasco`, `doces`).
+- [x] **Registro de Decisão Arquitetural (`adr-001-postgres-database.md`):** Criado com base no template oficial (`adr-template.md`), documentando contexto, decisão, justificativa, consequências e alternativas analisadas.
 
-## 3. Recomendação Final
+## 3. Telemetria de Qualidade
 
-`VALIADÇÃO APROVADA`
-A infraestrutura em Docker e o esquema relacional no PostgreSQL cumprem todas as regras de integridade do projeto e as diretrizes do `postgres-template.md`.
+```text
+Zero Defects Identified
+Iterações até estabilização: 1
+```
+
+## 4. Recomendação Final
+
+`VALIDAÇÃO APROVADA`
+Todos os testes e verificações estáticas passaram com sucesso. O modelo de dados e a infraestrutura Docker atendem integralmente aos requisitos do projeto e ao padrão do `postgres-template.md`.

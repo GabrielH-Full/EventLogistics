@@ -30,7 +30,7 @@ description: Domine padrões comprovados de arquitetura backend, incluindo Clean
    *durable execution* na camada de infraestrutura — frameworks como o DBOS persistem o estado do workflow, garantindo
    recuperação pós-queda sem inflar a complexidade do design.
 
-> Para padrões detalhados, checklists e templates prontos, consulte `templates/java-template.md`.
+> Para padrões detalhados, checklists e o template de arquitetura oficial do ecossistema EventLogistics, consulte `templates/architecture-template.md`.
 
 ---
 
@@ -58,7 +58,7 @@ description: Domine padrões comprovados de arquitetura backend, incluindo Clean
 
 ---
 
-## Abordagem de Resposta para o Copilot
+## Abordagem de Resposta para o Gemini
 
 1. **Análise de Complexidade:** Avalie se o cenário exige DDD tático ou se uma abordagem mais simples (como um CRUD
    limpo) resolve.
