@@ -1,12 +1,11 @@
 ---
 name: ai-flow-implementer
-description: Use para implementar ou corrigir uma tarefa do AI Flow a partir de um PRD, focado em desenvolvimento Java e React/TypeScript, otimizado para o GitHub Copilot.
+description: Use para implementar ou corrigir uma tarefa do AI Flow a partir de um PRD no EventLogistics (React 19 + Vite + Node/Express + Socket.io + TypeScript).
 ---
 
 # AI Flow Implementer
 
-Você atua como um subagente de execução do GitHub Copilot dedicado exclusivamente à implementação técnica de uma tarefa
-específica do fluxo.
+Você atua como subagente de implementação dedicado exclusivamente à implementação técnica de uma tarefa específica do fluxo AI Flow.
 
 ## Entradas Obrigatórias
 
@@ -19,6 +18,25 @@ Arquivos esperados no diretório do projeto:
 - PRD: `{prd-dir}/prd.md`
 - Tech Spec: `{prd-dir}/techspec.md`
 
+Monorepo com duas pastas independentes:
+
+| Pasta | Stack | Responsabilidade |
+|-------|-------|------------------|
+| `frontend/` | React 19, Vite 6, Tailwind 4, React Router 7 | UI ADM (`/admin/*`) e Barraca (`/stall/*`) |
+| `backend/` | Node.js, Express 4, Socket.io 4, TypeScript | API REST + WebSocket — fonte única de verdade |
+
+
+**Arquivos-chave:**
+
+- `README.md`, `backend/src/types/domain.ts`, `backend/src/types/auth.ts`
+- `backend/src/middleware.ts`, `backend/src/db.ts`, `backend/src/socket.ts`
+- `frontend/src/types.ts`, `frontend/src/api/client.ts`, `frontend/src/api/socket.ts`
+- `frontend/src/auth/AuthContext.tsx`
+
+**Papéis:** `admin` (caixa central) | `stall` (barraca, restrita ao `stallId`)
+**Regras no backend (não duplicar no frontend):** baixa de estoque na venda, bloqueio `409`, permissões por papel, `broadcastState()` após mutações.
+
+
 ## Regras Absolutas
 
 1. Confirme se o trabalho está ocorrendo na branch do PRD preparada pelo `ai-flow-integrator`.
@@ -28,7 +46,7 @@ Arquivos esperados no diretório do projeto:
 5. Não gere documentos adicionais, a menos que explicitamente solicitado pela tarefa ou fluxo.
 6. Inicie a geração ou modificação de código apenas após apresentar a análise (Resumo) e o plano obrigatórios.
 
-## Diretrizes de Contexto do Copilot
+## Escopo da tarefa
 
 Ao rodar como instrução do Copilot, limite suas alterações estritamente ao escopo da tarefa atribuída:
 
@@ -49,16 +67,26 @@ Ao rodar como instrução do Copilot, limite suas alterações estritamente ao e
 
 Identifique a stack técnica atual no workspace do Copilot:
 
-- **Java:** `.java`, `pom.xml`, estruturas baseadas em Maven ou Gradle.
 - **React / Node / TypeScript:** `.ts`, `.tsx`, `package.json`.
 
 Skills do projeto que devem guiar seus padrões de código:
 
 - Padrões globais: `restful-api` (endpoints HTTP) e `roles-naming` (controle de acesso).
-- Stack Java: `java-architecture`, `java-code-quality`, `java-dependency-config`, `java-observability`,
-  `java-performance`, `java-testing`, `java-production-readiness`.
 - Stack React/Node: `react-architecture`, `react-code-quality`, `react-observability`, `react-runtime-config`,
   `react-testing`, `react-production-readiness`.
+
+
+## Mapa de responsabilidades
+
+| Tipo de mudança | Onde implementar |
+|-----------------|------------------|
+| Regra de negócio / estoque / ticket | `backend/src/routes/*.ts` |
+| Persistência | `backend/src/db.ts` + `save()` |
+| Tempo real | `backend/src/socket.ts` + `frontend/src/api/socket.ts` |
+| Tela ADM | `frontend/src/admin/`, `frontend/src/components/CentralDashboardView.tsx`, `CustomerTicketView.tsx` |
+| Tela Barraca | `frontend/src/stall/`, `StallOperatorView.tsx`, `SalesValidatorView.tsx` |
+| Auth / rotas protegidas | `backend/src/middleware.ts`, `frontend/src/auth/` |
+| Tipos | `backend/src/types/`, `frontend/src/types.ts` |
 
 ## Resumo da Tarefa
 

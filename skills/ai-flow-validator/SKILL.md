@@ -54,8 +54,6 @@ Execute os comandos mais relevantes do projeto:
 
 Escolha com base na stack e nos scripts do repositório:
 
-- Java: Maven/Gradle, JUnit, Spotless, Checkstyle ou equivalentes
-- .NET: `dotnet build`, `dotnet test`, analyzers ou equivalentes
 - React/Node: scripts do `package.json`, Vitest, ESLint, TypeScript ou equivalentes
 - Outras stacks: comandos padrão do repositório
 
@@ -95,8 +93,6 @@ diretrizes.
 
 Use as skills relevantes:
 
-- Java: `java-architecture`, `java-code-quality`, `java-dependency-config`, `java-observability`, `java-performance`,
-  `java-testing`, `java-production-readiness`
 - React/TypeScript: `react-architecture`, `react-code-quality`, `react-observability`, `react-runtime-config`,
   `react-testing`, `react-production-readiness`
 - Comuns: `restful-api` para APIs HTTP, `roles-naming` para controle de acesso
