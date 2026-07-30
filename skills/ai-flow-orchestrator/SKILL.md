@@ -44,7 +44,7 @@ Use `{PRD_DIR}` como diretório base.
 
 ## Modelo de Execução de Subagentes no Codex
 
-No Codex, uma skill é executada no agente atual. Para reproduzir o comportamento de delegação do GitHub Copilot `.agent.md`, o usuário deve solicitar explicitamente a utilização de subagentes.
+No Codex, uma skill é executada no agente atual. Para reproduzir o comportamento de delegação do GitHub Gemini `.agent.md`, o usuário deve solicitar explicitamente a utilização de subagentes.
 
 Quando o usuário solicitar explicitamente a execução deste fluxo com subagentes:
 
