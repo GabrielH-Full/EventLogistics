@@ -15,7 +15,7 @@ Substituição das rotinas síncronas de `db.ts` por consultas assíncronas no P
 ## Tarefas
 
 - [x] 1.0 Configuração Docker & Esquema PostgreSQL do EventLogistics (`1_task.md`)
-- [ ] 2.0 Implementação da Camada de Banco de Dados Assíncrona no Backend (`2_task.md`)
+- [x] 2.0 Implementação da Camada de Banco de Dados Assíncrona no Backend (`2_task.md`)
 
 ## Analise de Paralelizacao
 
