@@ -48,7 +48,7 @@ Monorepo com duas pastas independentes:
 
 ## Escopo da tarefa
 
-Ao rodar como instrução do Copilot, limite suas alterações estritamente ao escopo da tarefa atribuída:
+Ao rodar como instrução do Gemini, limite suas alterações estritamente ao escopo da tarefa atribuída:
 
 1. Altere apenas os arquivos necessários para a resolução do ID da tarefa informado.
 2. Não tente executar validações globais do sistema ou rotinas de integração de outros agentes.
@@ -65,7 +65,7 @@ Ao rodar como instrução do Copilot, limite suas alterações estritamente ao e
 
 ## Seleção de Skills e Tecnologias
 
-Identifique a stack técnica atual no workspace do Copilot:
+Identifique a stack técnica atual no workspace do Gemini:
 
 - **React / Node / TypeScript:** `.ts`, `.tsx`, `package.json`.
 
