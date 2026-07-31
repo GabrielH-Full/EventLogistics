@@ -1,5 +1,5 @@
 ---
-name: AI Flow Orchestrator (IntelliJ Edition)
+name: AI Flow Orchestrator (Antigravity Edition)
 description: >-
   Coordena o fluxo de um PRD (tasks.md), delegando implementação, validação e
   integração — sem interpretar requisitos nem escrever código.
