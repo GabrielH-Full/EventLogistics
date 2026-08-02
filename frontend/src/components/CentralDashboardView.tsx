@@ -12,7 +12,8 @@ import {
   Candy,
   Flame, 
   TrendingUp, 
-  Ticket as TicketIcon 
+  Ticket as TicketIcon,
+  Store
 } from 'lucide-react';
 import { IMAGES } from '../data';
 
@@ -207,12 +208,12 @@ export default function CentralDashboardView({
           {stalls.map((stall) => {
             const stallProducts = renderStallProducts(stall.id);
 
-            const STALL_ICONS: Record<Stall['icon'], typeof Flame> = {
+            const STALL_ICONS: Record<string, typeof Flame> = {
               bakery_dining: UtensilsCrossed,
               outdoor_grill: Flame,
               local_candy: Candy
             };
-            const StallIcon = STALL_ICONS[stall.icon];
+            const StallIcon = STALL_ICONS[stall.icon] || Store;
 
 
             return (

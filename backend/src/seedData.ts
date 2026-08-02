@@ -1,3 +1,10 @@
+/**
+ * @deprecated ATENÇÃO: Este arquivo (`seedData.ts`) serve APENAS para o setup inicial 
+ * de banco via Docker-compose (criação do admin master inicial e migrações básicas). 
+ * Para criar ou gerenciar produtos, barracas, usuários ou categorias na aplicação,
+ * utilize a UI do Painel Administrativo, que garante integridade relacional,
+ * formatações estritas de banco de dados e disparo do cache/WebSockets corretamente.
+ */
 import bcrypt from 'bcryptjs';
 import { Product, Stall, Ticket } from './types/domain';
 import { User } from './types/auth';

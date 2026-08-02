@@ -11,6 +11,10 @@ const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const stateRoutes_1 = __importDefault(require("./routes/stateRoutes"));
 const ticketRoutes_1 = __importDefault(require("./routes/ticketRoutes"));
 const productRoutes_1 = __importDefault(require("./routes/productRoutes"));
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const productCategoryRoutes_1 = __importDefault(require("./routes/productCategoryRoutes"));
+const adminStallRoutes_1 = __importDefault(require("./routes/adminStallRoutes"));
+const adminProductRoutes_1 = __importDefault(require("./routes/adminProductRoutes"));
 const socket_1 = require("./socket");
 const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
@@ -21,6 +25,10 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/state', stateRoutes_1.default);
 app.use('/api/tickets', ticketRoutes_1.default);
+app.use('/api/users', userRoutes_1.default);
+app.use('/api/product-categories', productCategoryRoutes_1.default);
+app.use('/api/stalls', adminStallRoutes_1.default);
+app.use('/api/products', adminProductRoutes_1.default);
 app.use('/api', productRoutes_1.default); // /api/products/:id/production e /api/stalls/:stallId/reset
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
 app.use((err, req, res, next) => {

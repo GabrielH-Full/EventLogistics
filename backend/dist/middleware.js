@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.requireAdmin = void 0;
 exports.requireAuth = requireAuth;
 exports.requireRole = requireRole;
 const auth_1 = require("./auth");
@@ -29,3 +30,4 @@ function requireRole(...roles) {
         next();
     };
 }
+exports.requireAdmin = requireRole('admin');

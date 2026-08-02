@@ -7,6 +7,10 @@ import authRoutes from './routes/authRoutes';
 import stateRoutes from './routes/stateRoutes';
 import ticketRoutes from './routes/ticketRoutes';
 import productRoutes from './routes/productRoutes';
+import userRoutes from './routes/userRoutes';
+import productCategoryRoutes from './routes/productCategoryRoutes';
+import adminStallRoutes from './routes/adminStallRoutes';
+import adminProductRoutes from './routes/adminProductRoutes';
 import { initSocket } from './socket';
 
 const PORT = process.env.PORT || 4000;
@@ -21,6 +25,10 @@ app.get('/api/health', (req: Request, res: Response) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/state', stateRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/product-categories', productCategoryRoutes);
+app.use('/api/stalls', adminStallRoutes);
+app.use('/api/products', adminProductRoutes);
 app.use('/api', productRoutes); // /api/products/:id/production e /api/stalls/:stallId/reset
 
 app.use((req: Request, res: Response) => res.status(404).json({ error: 'Rota não encontrada.' }));

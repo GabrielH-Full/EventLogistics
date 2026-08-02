@@ -57,5 +57,43 @@ export const api = {
     }),
 
   resetStallStock: (stallId: string) =>
-    request<{ products: any[] }>(`/api/stalls/${stallId}/reset`, { method: 'POST' })
+    request<{ products: any[] }>(`/api/stalls/${stallId}/reset`, { method: 'POST' }),
+
+  // CRUD Admin - Users
+  getUsers: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return request<{ data: any[]; total: number }>(`/api/users${qs}`);
+  },
+  createUser: (body: any) => request<any>('/api/users', { method: 'POST', body: JSON.stringify(body) }),
+  updateUser: (id: number | string, body: any) => request<any>(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  toggleUserStatus: (id: number | string) => request<void>(`/api/users/${id}/status`, { method: 'PATCH' }),
+  deleteUser: (id: number | string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
+
+  // CRUD Admin - Stalls
+  getStalls: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return request<{ data: any[]; total: number }>(`/api/stalls${qs}`);
+  },
+  createStall: (body: any) => request<any>('/api/stalls', { method: 'POST', body: JSON.stringify(body) }),
+  updateStall: (id: number | string, body: any) => request<any>(`/api/stalls/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  toggleStallStatus: (id: number | string) => request<void>(`/api/stalls/${id}/status`, { method: 'PATCH' }),
+  deleteStall: (id: number | string) => request<void>(`/api/stalls/${id}`, { method: 'DELETE' }),
+
+  // CRUD Admin - Products
+  getProducts: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return request<{ data: any[]; total: number }>(`/api/products${qs}`);
+  },
+  createProduct: (body: any) => request<any>('/api/products', { method: 'POST', body: JSON.stringify(body) }),
+  updateProduct: (id: number | string, body: any) => request<any>(`/api/products/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  toggleProductStatus: (id: number | string) => request<void>(`/api/products/${id}/status`, { method: 'PATCH' }),
+  deleteProduct: (id: number | string) => request<void>(`/api/products/${id}`, { method: 'DELETE' }),
+
+  // CRUD Admin - Product Categories
+  getProductCategories: (params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return request<{ data: any[] }>(`/api/product-categories${qs}`);
+  },
+  createProductCategory: (body: any) => request<any>('/api/product-categories', { method: 'POST', body: JSON.stringify(body) }),
+  deleteProductCategory: (id: number | string) => request<void>(`/api/product-categories/${id}`, { method: 'DELETE' }),
 };

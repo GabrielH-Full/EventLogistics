@@ -38,10 +38,14 @@ function AppRoutes() {
   );
 }
 
+import { ToastProvider } from './components/admin/ToastContext';
+
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ToastProvider>
   );
 }
