@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, LogOut, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, LogOut, AlertCircle, Users, Store, Package } from 'lucide-react';
 import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import CentralDashboardView from '../components/CentralDashboardView';
 import StallDetailsView from '../components/StallDetailsView';
 import { useAppData } from '../api/useAppData';
 import { useAuth } from '../auth/AuthContext';
 import { Product, Ticket, Stall } from '../types';
+
+import { UsersPage, UserFormPage } from '../pages/admin/UsersPage';
+import { StallsPage, StallFormPage } from '../pages/admin/StallsPage';
+import { ProductsPage, ProductFormPage } from '../pages/admin/ProductsPage';
+import { AdminGuard } from '../components/admin/AdminGuard';
 
 /** Tela de detalhes de uma barraca específica, resolvida a partir do :stallId da URL. */
 function StallDetailsRoute({
@@ -71,13 +76,40 @@ export default function AdminApp() {
             </button>
             */} {/*button venda de ticket*/}
             <button
+              onClick={() => navigate('/admin/users')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                location.pathname.startsWith('/admin/users') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Usuários</span>
+            </button>
+            <button
+              onClick={() => navigate('/admin/stalls')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                location.pathname.startsWith('/admin/stalls') && !location.pathname.startsWith('/admin/stalls-old') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Barracas</span>
+            </button>
+            <button
+              onClick={() => navigate('/admin/products')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                location.pathname.startsWith('/admin/products') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Produtos</span>
+            </button>
+            <button
               onClick={() => navigate('/admin/dashboard')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                isDashboardArea ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                isDashboardArea && !location.pathname.startsWith('/admin/stalls') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Painel Geral</span>
+              <span className="hidden sm:inline">Painel Geral</span>
             </button>
             <button
               onClick={logout}
@@ -117,25 +149,25 @@ export default function AdminApp() {
               }
             />
             <Route
-              path="stalls/:stallId"
+              path="stalls-old/:stallId"
               element={<StallDetailsRoute stalls={stalls} products={products} tickets={tickets} />}
             />
-            {/*
-            <Route
-              path="sell"
-              element={
-                <CustomerTicketView
-                  products={products}
-                  cart={cart}
-                  onAddToCart={handleAddToCart}
-                  onRemoveFromCart={handleRemoveFromCart}
-                  onUpdateCartQuantity={handleUpdateCartQuantity}
-                  onCheckout={handleCheckout}
-                  checkoutStatus={checkoutStatus}
-                />
-              }
-            />
-            */}
+
+            {/* Novas Rotas CRUD (protegidas por AdminGuard internamente) */}
+            <Route element={<AdminGuard />}>
+              <Route path="users" element={<UsersPage />} />
+              <Route path="users/new" element={<UserFormPage mode="create" />} />
+              <Route path="users/:id/edit" element={<UserFormPage mode="edit" />} />
+
+              <Route path="stalls" element={<StallsPage />} />
+              <Route path="stalls/new" element={<StallFormPage mode="create" />} />
+              <Route path="stalls/:id/edit" element={<StallFormPage mode="edit" />} />
+
+              <Route path="products" element={<ProductsPage />} />
+              <Route path="products/new" element={<ProductFormPage mode="create" />} />
+              <Route path="products/:id/edit" element={<ProductFormPage mode="edit" />} />
+            </Route>
+
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
           </Routes>
         )}

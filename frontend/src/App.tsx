@@ -28,7 +28,7 @@ function AppRoutes() {
       </Route>
 
       {/* Área da Barraca: produção/estoque + validação de tickets, restrita à própria barraca. */}
-      <Route element={<ProtectedRoute allowedRoles={['stall']} />}>
+      <Route element={<ProtectedRoute allowedRoles={['stall', 'operator']} />}>
         <Route path="/stall/*" element={<StallApp />} />
       </Route>
 
@@ -38,10 +38,14 @@ function AppRoutes() {
   );
 }
 
+import { ToastProvider } from './components/admin/ToastContext';
+
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ToastProvider>
   );
 }

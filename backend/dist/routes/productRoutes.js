@@ -11,7 +11,7 @@ function assertOwnsProduct(req, res, product) {
         res.status(404).json({ error: 'Produto não encontrado.' });
         return false;
     }
-    if (req.user.role === 'stall' && product.stallId !== req.user.stallId) {
+    if ((req.user.role === 'stall' || req.user.role === 'operator') && product.stallId !== req.user.stallId) {
         res.status(403).json({ error: 'Esse produto não pertence à sua barraca.' });
         return false;
     }
@@ -19,7 +19,7 @@ function assertOwnsProduct(req, res, product) {
 }
 // POST /api/products/:id/production { amount }
 // Só a barraca dona do produto pode registrar produção nova (reabastecimento).
-router.post('/products/:id/production', middleware_1.requireAuth, (0, middleware_1.requireRole)('stall'), (req, res) => {
+router.post('/products/:id/production', middleware_1.requireAuth, (0, middleware_1.requireRole)('stall', 'operator'), (req, res) => {
     const product = db_1.state.products.find(p => p.id === req.params.id);
     if (!assertOwnsProduct(req, res, product))
         return;
@@ -35,9 +35,9 @@ router.post('/products/:id/production', middleware_1.requireAuth, (0, middleware
 // POST /api/stalls/:stallId/reset
 // Restaura o estoque apenas dos produtos daquela barraca para os valores
 // iniciais de demonstração (não mexe nas outras barracas nem nos tickets).
-router.post('/stalls/:stallId/reset', middleware_1.requireAuth, (0, middleware_1.requireRole)('stall', 'admin'), (req, res) => {
+router.post('/stalls/:stallId/reset', middleware_1.requireAuth, (0, middleware_1.requireRole)('stall', 'operator', 'admin'), (req, res) => {
     const { stallId } = req.params;
-    if (req.user.role === 'stall' && req.user.stallId !== stallId) {
+    if ((req.user.role === 'stall' || req.user.role === 'operator') && req.user.stallId !== stallId) {
         return res.status(403).json({ error: 'Você só pode redefinir sua própria barraca.' });
     }
     const seed = (0, seedData_1.buildInitialState)();
@@ -45,7 +45,7 @@ router.post('/stalls/:stallId/reset', middleware_1.requireAuth, (0, middleware_1
         if (p.stallId !== stallId)
             return p;
         const seedProduct = seed.products.find(sp => sp.id === p.id);
-        return seedProduct ? { ...p, stock: seedProduct.stock } : p;
+        return { ...p, stock: seedProduct ? seedProduct.stock : 0 };
     });
     (0, db_1.save)();
     (0, socket_1.broadcastState)();

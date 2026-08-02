@@ -12,7 +12,7 @@ function assertOwnsProduct(req: Request, res: Response, product: Product | undef
     res.status(404).json({ error: 'Produto não encontrado.' });
     return false;
   }
-  if (req.user!.role === 'stall' && product.stallId !== req.user!.stallId) {
+  if ((req.user!.role === 'stall' || req.user!.role === 'operator') && product.stallId !== req.user!.stallId) {
     res.status(403).json({ error: 'Esse produto não pertence à sua barraca.' });
     return false;
   }
@@ -28,7 +28,7 @@ interface ProductionBody {
 router.post(
   '/products/:id/production',
   requireAuth,
-  requireRole('stall'),
+  requireRole('stall', 'operator'),
   (req: Request<{ id: string }, {}, ProductionBody>, res: Response) => {
     const product = state.products.find(p => p.id === req.params.id);
     if (!assertOwnsProduct(req, res, product)) return;
@@ -52,10 +52,10 @@ router.post(
 router.post(
   '/stalls/:stallId/reset',
   requireAuth,
-  requireRole('stall', 'admin'),
+  requireRole('stall', 'operator', 'admin'),
   (req: Request<{ stallId: string }>, res: Response) => {
     const { stallId } = req.params;
-    if (req.user!.role === 'stall' && req.user!.stallId !== stallId) {
+    if ((req.user!.role === 'stall' || req.user!.role === 'operator') && req.user!.stallId !== stallId) {
       return res.status(403).json({ error: 'Você só pode redefinir sua própria barraca.' });
     }
 
@@ -63,7 +63,7 @@ router.post(
     state.products = state.products.map(p => {
       if (p.stallId !== stallId) return p;
       const seedProduct = seed.products.find(sp => sp.id === p.id);
-      return seedProduct ? { ...p, stock: seedProduct.stock } : p;
+      return { ...p, stock: seedProduct ? seedProduct.stock : 0 };
     });
 
     save();

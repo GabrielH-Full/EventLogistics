@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { state } from '../db';
-import { checkPassword, signToken } from '../auth';
+import bcrypt from 'bcryptjs';
+import { db } from '../db';
+import { signToken } from '../auth';
 import { requireAuth } from '../middleware';
 
 const router = Router();
@@ -11,32 +12,81 @@ interface LoginBody {
 }
 
 // POST /api/auth/login { username, password }
-router.post('/login', (req: Request<{}, {}, LoginBody>, res: Response) => {
+// Migrado de state.users (memória) para PostgreSQL (Task 7.0)
+router.post('/login', async (req: Request<{}, {}, LoginBody>, res: Response): Promise<void> => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
-    return res.status(400).json({ error: 'Informe usuário e senha.' });
+    res.status(400).json({ error: 'Informe usuário e senha.' });
+    return;
   }
 
-  const user = state.users.find(u => u.username === username);
-  if (!user || !checkPassword(password, user.passwordHash)) {
-    return res.status(401).json({ error: 'Usuário ou senha inválidos.' });
-  }
+  try {
+    // Busca no PostgreSQL (case-insensitive via LOWER)
+    const result = await db.query(
+      `SELECT user_id, username, password_hash, role, stall_id, display_name, is_active
+       FROM users WHERE LOWER(username) = LOWER($1)`,
+      [username]
+    );
 
-  const token = signToken(user);
-  return res.json({
-    token,
-    user: {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      stallId: user.stallId,
-      displayName: user.displayName
+    const row = result.rows[0];
+
+    // Usuário não encontrado — mensagem genérica por segurança
+    if (!row) {
+      res.status(401).json({ error: 'Usuário ou senha inválidos.' });
+      return;
     }
-  });
+
+    // Conta desativada — mensagem específica
+    if (!row.is_active) {
+      res.status(401).json({ error: 'Usuário desativado. Fale com um administrador.' });
+      return;
+    }
+
+    // Verificação de senha com bcrypt (hash armazenado no banco)
+    const passwordMatch = await bcrypt.compare(password, row.password_hash);
+    if (!passwordMatch) {
+      res.status(401).json({ error: 'Usuário ou senha inválidos.' });
+      return;
+    }
+
+    let stallIdToUse = row.stall_id;
+    
+    // Se o usuário não tem stall_id direto, buscamos o primeiro da tabela stall_users
+    if (!stallIdToUse) {
+      const stallUserRes = await db.query('SELECT stall_id FROM stall_users WHERE user_id = $1 LIMIT 1', [row.user_id]);
+      if (stallUserRes.rows.length > 0) {
+        stallIdToUse = stallUserRes.rows[0].stall_id;
+      }
+    }
+
+    // Montar objeto compatível com a interface User e gerar JWT
+    const token = signToken({
+      id: row.user_id,
+      username: row.username,
+      passwordHash: row.password_hash, // necessário pela interface User — não incluído no payload do token
+      role: row.role,
+      stallId: stallIdToUse,
+      displayName: row.display_name,
+    });
+
+    res.json({
+      token,
+      user: {
+        id: row.user_id,
+        username: row.username,
+        role: row.role,
+        stallId: stallIdToUse,
+        displayName: row.display_name,
+      }
+    });
+  } catch (error) {
+    console.error('Erro no login:', error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
 });
 
-// GET /api/auth/me -> valida o token salvo e devolve os dados do usuário,
+// GET /api/auth/me → valida o token salvo e devolve os dados do usuário,
 // usado para manter a sessão ao recarregar a página.
 router.get('/me', requireAuth, (req: Request, res: Response) => {
   res.json({ user: req.user });

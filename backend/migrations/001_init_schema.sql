@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     username      TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role          TEXT NOT NULL CHECK (role IN ('admin', 'stall')),
+    role          TEXT NOT NULL CHECK (role IN ('admin', 'operator')),
     stall_id      TEXT NULL,
     display_name  TEXT NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()

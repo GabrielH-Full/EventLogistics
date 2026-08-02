@@ -11,9 +11,8 @@ Preencha os campos entre `[ ]` e remova as opções que não se aplicam.
 Crie [TIPO DE ENTREGÁVEL] para [NOME DO PROJETO/PRODUTO].
 
 ## Contexto do Projeto
-- **Tipo de produto**: [SaaS / E-commerce / Landing page / Dashboard / Portfólio / Blog / App móvel / Painel admin]
+- **Tipo de produto**: [SaaS / E-commerce / Landing page / Dashboard / App móvel / Painel admin]
 - **Setor**: [Saúde / Fintech / Beleza/Bem-estar / Educação / Jogos / Varejo / Tecnologia / Serviços]
-- **Público-alvo**: [Ex: profissionais de 25-40 anos, jovens de 18-24, empresas B2B]
 - **Stack**: [html-tailwind / React / Next.js / Vue / Svelte / SwiftUI / React Native / Flutter / shadcn/ui]
 
 ## Estilo Visual
@@ -69,7 +68,6 @@ Crie [TIPO DE ENTREGÁVEL] para [NOME DO PROJETO/PRODUTO].
 
 ## Restrições e Preferências
 - [Ex: Não use imagens de stock]
-- [Ex: Prefiro CSS puro sem frameworks]
 - [Ex: Evite animações pesadas por questão de performance]
 - [Ex: Precisa funcionar offline]
 
@@ -85,22 +83,6 @@ Crie [TIPO DE ENTREGÁVEL] para [NOME DO PROJETO/PRODUTO].
 
 ## 🚀 Templates Rápidos por Caso de Uso
 
-### Landing Page — Produto SaaS
-
-```
-Crie uma landing page completa para um produto SaaS de [DESCRIÇÃO].
-
-- Stack: html-tailwind
-- Estilo: Glassmorphism + Modo Escuro
-- Mood: Moderno, Futurista, Profissional
-- Seções: Hero, Features (3 cards), Pricing (3 planos), Testimonials, CTA, Footer
-- Fonte: Inter (título e corpo)
-- Cores: tons de índigo/violeta com acentos em ciano
-- Responsivo: mobile-first
-- Ícones: Lucide SVG (sem emojis)
-- Animações: scroll reveal suave, hover com brilho/sombra
-```
-
 ### Dashboard Administrativo
 
 ```
@@ -113,35 +95,6 @@ Crie um dashboard administrativo para [PRODUTO/SETOR].
 - Paleta: slate-900 de fundo, índigo como acento
 - Responsivo: collapsable sidebar em mobile
 - Gráficos: Recharts (React) / Chart.js (vanilla)
-```
-
-### E-commerce — Página de Produto
-
-```
-Crie a página de produto para um e-commerce de [NICHO].
-
-- Stack: html-tailwind
-- Estilo: Minimalismo Luxuoso + Modo Claro
-- Mood: Elegante, Premium
-- Seções: Galeria de imagens, Detalhes do produto, Seletor de variantes, Botão de compra, Reviews
-- Fonte: Playfair Display (título) + DM Sans (corpo)
-- Cores: brancos, cremes e acentos em dourado
-- Ícones: Heroicons SVG
-- Micro-animações: hover nos cards de produto, loading no botão de compra
-```
-
-### Portfólio Criativo
-
-```
-Crie um portfólio criativo para [PROFISSÃO: designer / dev / fotógrafo].
-
-- Stack: html-tailwind
-- Estilo: Brutalismo Suave OU Glassmorphism
-- Mood: Ousado, Criativo, Autêntico
-- Seções: Hero com nome/título, Grid de projetos, Sobre, Skills, Contato
-- Fonte: Clash Display (título) + Satoshi (corpo)
-- Cores: fundo preto, texto branco, 1 cor de acento vibrante
-- Efeitos: parallax sutil, cursor customizado, hover nos cards
 ```
 
 ### App Móvel (React Native / Flutter)

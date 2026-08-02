@@ -4,6 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildInitialState = buildInitialState;
+/**
+ * @deprecated ATENÇÃO: Este arquivo (`seedData.ts`) serve APENAS para o setup inicial
+ * de banco via Docker-compose (criação do admin master inicial e migrações básicas).
+ * Para criar ou gerenciar produtos, barracas, usuários ou categorias na aplicação,
+ * utilize a UI do Painel Administrativo, que garante integridade relacional,
+ * formatações estritas de banco de dados e disparo do cache/WebSockets corretamente.
+ */
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 // Mesma base de dados que existia em src/data.ts no frontend, agora vivendo
 // no backend, que é a fonte única de verdade.

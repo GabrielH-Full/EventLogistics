@@ -34,7 +34,7 @@ export interface Ticket {
   status: 'pending' | 'validated';
 }
 
-export type UserRole = 'admin' | 'stall';
+export type UserRole = 'admin' | 'stall' | 'operator';
 
 export interface AuthUser {
   sub: string;

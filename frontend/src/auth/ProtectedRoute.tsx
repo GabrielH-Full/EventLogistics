@@ -39,7 +39,7 @@ export function ProtectedRoute({ allowedRoles }: { allowedRoles?: UserRole[] }) 
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  if (user.role !== 'admin' && user.role !== 'stall') {
+  if (user.role !== 'admin' && user.role !== 'stall' && user.role !== 'operator') {
     console.log('[ProtectedRoute] role inválido:', user.role, '-> logout + /login');
     logout();
     return <Navigate to="/login" replace />;
