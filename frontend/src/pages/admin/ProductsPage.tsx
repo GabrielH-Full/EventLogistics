@@ -84,11 +84,6 @@ export function ProductsPage() {
   };
 
   const columns: Column<any>[] = [
-    {
-      key: 'icon',
-      header: '',
-      render: (p) => p.parent_type === 'food' ? <UtensilsCrossed className="w-5 h-5 text-gray-400" /> : <GlassWater className="w-5 h-5 text-gray-400" />
-    },
     { key: 'name', header: 'Produto' },
     { key: 'parent_type', header: 'Tipo', render: (p) => p.parent_type === 'food' ? 'Alimento' : 'Bebida' },
     { key: 'category_name', header: 'Categoria', render: (p) => p.category_name || '-' },
