@@ -19,11 +19,17 @@ eventlogistics/
 
 Abra dois terminais.
 
-**Terminal 1 — backend**
+**Terminal 1 — Infraestrutura (PostgreSQL)**
+```bash
+docker-compose up -d
+```
+
+**Terminal 2 — Backend**
 ```bash
 cd backend
 cp .env.example .env
 npm install
+npm run build
 npm start
 ```
 Sobe em `http://localhost:4000`.
@@ -38,14 +44,12 @@ Sobe em `http://localhost:3000` (ou porta configurada), com proxy automático de
 
 ## Contas de demonstração
 
-| Usuário | Senha | Papel | Acesso |
+| Usuário | Papel | Acesso |
 |---|---|---|---|
-| `admin` | `admin123` | ADM | Vender tickets + painel geral |
-| `pastel` | `pastel123` | Barraca | Barraca do Pastel |
-| `churrasco` | `churrasco123` | Barraca | Barraca do Churrasco |
-| `doces` | `doces123` | Barraca | Barraca de Doces |
+| `admin` | Administrador | Caixa central, painel geral e Gestão (CRUD) |
 
-⚠️ São senhas de demonstração — troque-as (ou implemente cadastro de usuários) antes de usar em um evento real. Veja `backend/src/seedData.js`.
+
+⚠️ **Nota:** A gestão de Usuários, Barracas e Produtos não precisa mais ser feita editando arquivos-fonte (seed). Utilize a aba "Gestão" logando como `admin` para cadastrar novos usuários, barracas e customizar estoques dinamicamente pelo Painel Administrativo Web!
 
 ## Regras de negócio implementadas no backend
 
@@ -55,10 +59,9 @@ Isso é o que resolve o problema original (caixa vendendo ticket de comida que j
 2. **Bloqueio automático de venda com estoque insuficiente** — a API recusa a venda (`409`) se não houver unidades suficientes, mesmo que o caixa tente vender.
 3. **Permissões por papel** — só a conta ADM vende tickets; só a barraca dona de um produto pode reabastecê-lo; só a barraca dona de um ticket (ou o ADM) pode validá-lo.
 4. **Tempo real** — qualquer mudança (venda, reposição, validação) é transmitida via WebSocket para todas as telas conectadas na hora.
-5. **Persistência** — o estado fica salvo em `backend/data.json`, sobrevive a reinícios do servidor.
+5. **Persistência** — os dados estruturais (Usuários, Senhas, Barracas, Relatórios) utilizam **PostgreSQL**. O controle de tickets volátil se apoia em JSON temporário para máxima performance híbrida.
 
 ## Limitações conhecidas / próximos passos
 
 - Um ticket pode conter itens de mais de uma barraca; hoje a validação marca o ticket inteiro como retirado. Para separar por item por barraca, seria necessário status por item (ver seção 3 do backlog de funcionalidades).
 - Não há modo offline — se a internet do evento cair, o sistema para de vender até reconectar.
-- Sem tela de cadastro de novos usuários/barracas pela interface; hoje isso é feito editando `backend/src/seedData.js`.

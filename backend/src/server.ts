@@ -27,9 +27,9 @@ app.use('/api/state', stateRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/product-categories', productCategoryRoutes);
+app.use('/api', productRoutes); // /api/products/:id/production e /api/stalls/:stallId/reset
 app.use('/api/stalls', adminStallRoutes);
 app.use('/api/products', adminProductRoutes);
-app.use('/api', productRoutes); // /api/products/:id/production e /api/stalls/:stallId/reset
 
 app.use((req: Request, res: Response) => res.status(404).json({ error: 'Rota não encontrada.' }));
 

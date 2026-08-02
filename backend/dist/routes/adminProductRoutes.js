@@ -54,9 +54,9 @@ const syncStateProducts = async () => {
 router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
-        const status = req.query.status; // 'true' | 'false'
+        const is_active = req.query.is_active; // 'true' | 'false'
         const stall_id = req.query.stall_id;
-        const category_id = req.query.category_id;
+        const parent_type = req.query.parent_type; // 'food' | 'drink'
         const page = parseInt(req.query.page || '1', 10);
         const limit = parseInt(req.query.limit || '10', 10);
         const offset = (page - 1) * limit;
@@ -66,20 +66,21 @@ router.get('/', async (req, res) => {
             whereClauses.push(`LOWER(p.name) LIKE LOWER($${queryArgs.length + 1})`);
             queryArgs.push(`%${search}%`);
         }
-        if (status) {
+        if (is_active && (is_active === 'true' || is_active === 'false')) {
             whereClauses.push(`p.is_active = $${queryArgs.length + 1}`);
-            queryArgs.push(status === 'true');
+            queryArgs.push(is_active === 'true');
         }
         if (stall_id) {
             whereClauses.push(`p.stall_id = $${queryArgs.length + 1}`);
             queryArgs.push(stall_id);
         }
-        if (category_id) {
-            whereClauses.push(`p.category_id = $${queryArgs.length + 1}`);
-            queryArgs.push(parseInt(category_id, 10));
+        if (parent_type) {
+            whereClauses.push(`c.parent_type = $${queryArgs.length + 1}`);
+            queryArgs.push(parent_type);
         }
         const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-        const countResult = await db_1.db.query(`SELECT COUNT(*) FROM products p ${whereString}`, queryArgs);
+        const joinString = parent_type ? `LEFT JOIN product_categories c ON p.category_id = c.category_id` : '';
+        const countResult = await db_1.db.query(`SELECT COUNT(*) FROM products p ${joinString} ${whereString}`, queryArgs);
         const total = parseInt(countResult.rows[0].count, 10);
         let listQueryArgs = [...queryArgs];
         listQueryArgs.push(limit);
@@ -90,8 +91,8 @@ router.get('/', async (req, res) => {
        FROM products p 
        LEFT JOIN stalls s ON p.stall_id = s.stall_id
        LEFT JOIN product_categories c ON p.category_id = c.category_id
-       ${whereString} 
-       ORDER BY p.created_at DESC 
+       ${whereString}
+       ORDER BY p.created_at DESC
        LIMIT $${limitIdx} OFFSET $${offsetIdx}`, listQueryArgs);
         res.json({ data: dataResult.rows, total, page, limit });
     }
@@ -107,7 +108,7 @@ router.post('/', async (req, res) => {
         res.status(400).json({ error: 'Campos name, stall_id, category_id, price são obrigatórios.' });
         return;
     }
-    if (typeof price !== 'number' || price <= 0) {
+    if (typeof price !== 'number' || price <= 0 || isNaN(price)) {
         res.status(400).json({ error: 'Preço inválido — deve ser um número positivo.' });
         return;
     }
@@ -153,8 +154,8 @@ router.get('/:id', async (req, res) => {
 // PUT /api/products/:id
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { name, stall_id, category_id, price, is_active } = req.body;
-    if (typeof price !== 'number' || price <= 0) {
+    const { name, stall_id, category_id, price, is_active = true } = req.body;
+    if (typeof price !== 'number' || price <= 0 || isNaN(price)) {
         res.status(400).json({ error: 'Preço inválido — deve ser um número positivo.' });
         return;
     }

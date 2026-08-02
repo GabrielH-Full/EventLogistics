@@ -50,13 +50,23 @@ router.post('/login', async (req: Request<{}, {}, LoginBody>, res: Response): Pr
       return;
     }
 
+    let stallIdToUse = row.stall_id;
+    
+    // Se o usuário não tem stall_id direto, buscamos o primeiro da tabela stall_users
+    if (!stallIdToUse) {
+      const stallUserRes = await db.query('SELECT stall_id FROM stall_users WHERE user_id = $1 LIMIT 1', [row.user_id]);
+      if (stallUserRes.rows.length > 0) {
+        stallIdToUse = stallUserRes.rows[0].stall_id;
+      }
+    }
+
     // Montar objeto compatível com a interface User e gerar JWT
     const token = signToken({
       id: row.user_id,
       username: row.username,
       passwordHash: row.password_hash, // necessário pela interface User — não incluído no payload do token
       role: row.role,
-      stallId: row.stall_id,
+      stallId: stallIdToUse,
       displayName: row.display_name,
     });
 
@@ -66,7 +76,7 @@ router.post('/login', async (req: Request<{}, {}, LoginBody>, res: Response): Pr
         id: row.user_id,
         username: row.username,
         role: row.role,
-        stallId: row.stall_id,
+        stallId: stallIdToUse,
         displayName: row.display_name,
       }
     });

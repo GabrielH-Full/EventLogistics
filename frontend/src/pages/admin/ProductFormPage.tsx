@@ -59,7 +59,7 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
     if (!formData.name) newErrors.name = 'Obrigatório.';
     if (!formData.stall_id) newErrors.stall_id = 'Selecione uma barraca.';
     if (!formData.category_id) newErrors.category_id = 'Selecione uma categoria.';
-    
+
     const numPrice = parseFloat(formData.price.replace(',', '.'));
     if (!formData.price || isNaN(numPrice)) {
       newErrors.price = 'Preço inválido.';
@@ -90,7 +90,7 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
         name: formData.name,
         parent_type: formData.parent_type,
         category_id: Number(formData.category_id),
-        stall_id: Number(formData.stall_id),
+        stall_id: formData.stall_id,
         price: parseFloat(formData.price.replace(',', '.')),
         is_active: formData.is_active,
       };
@@ -124,14 +124,14 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
       </button>
 
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
+        <h1 className="text-2xl font-black text-black tracking-tight">
           {mode === 'create' ? 'Novo Produto' : 'Editar Produto'}
         </h1>
-        <p className="text-sm text-gray-400 mt-1">Cadastre o item de cardápio e vincule-o a uma barraca.</p>
+        <p className="text-sm text-gray-600 mt-1">Cadastre o item de cardápio e vincule-o a uma barraca.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-[#191b24] p-6 rounded-2xl border border-gray-800 space-y-5 shadow-sm">
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="space-y-1 sm:col-span-2">
             <label htmlFor="product_name" className="text-xs font-semibold text-gray-300">Nome do Produto</label>
@@ -140,7 +140,7 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
               type="text"
               value={formData.name}
               onBlur={handleBlur}
-              onChange={e => { setFormData({...formData, name: e.target.value}); setErrors({...errors, name: ''}); }}
+              onChange={e => { setFormData({ ...formData, name: e.target.value }); setErrors({ ...errors, name: '' }); }}
               placeholder="Ex: Hambúrguer Artesanal"
               aria-describedby={errors.name ? 'product-name-error' : undefined}
               className={`block w-full px-4 py-2.5 border rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 sm:text-sm transition-all ${errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:border-[#0066ff] focus:ring-[#0066ff]'}`}
@@ -154,22 +154,20 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, parent_type: 'food', category_id: '' })}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                  formData.parent_type === 'food'
-                    ? 'border-[#0066ff] bg-[#0066ff]/10 text-[#0066ff]'
-                    : 'border-gray-700 bg-[#121319] text-gray-400 hover:bg-gray-800'
-                }`}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${formData.parent_type === 'food'
+                  ? 'border-[#0066ff] bg-[#0066ff]/10 text-[#0066ff]'
+                  : 'border-gray-700 bg-[#121319] text-gray-400 hover:bg-gray-800'
+                  }`}
               >
                 <UtensilsCrossed className="w-4 h-4" /> Alimento
               </button>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, parent_type: 'drink', category_id: '' })}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                  formData.parent_type === 'drink'
-                    ? 'border-[#0066ff] bg-[#0066ff]/10 text-[#0066ff]'
-                    : 'border-gray-700 bg-[#121319] text-gray-400 hover:bg-gray-800'
-                }`}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${formData.parent_type === 'drink'
+                  ? 'border-[#0066ff] bg-[#0066ff]/10 text-[#0066ff]'
+                  : 'border-gray-700 bg-[#121319] text-gray-400 hover:bg-gray-800'
+                  }`}
               >
                 <GlassWater className="w-4 h-4" /> Bebida
               </button>
@@ -182,7 +180,7 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
               id="category_id"
               value={formData.category_id}
               onBlur={handleBlur}
-              onChange={e => { setFormData({...formData, category_id: e.target.value}); setErrors({...errors, category_id: ''}); }}
+              onChange={e => { setFormData({ ...formData, category_id: e.target.value }); setErrors({ ...errors, category_id: '' }); }}
               aria-describedby={errors.category_id ? 'category-error' : undefined}
               className={`block w-full px-4 py-2.5 border rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 sm:text-sm transition-all cursor-pointer ${errors.category_id ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:border-[#0066ff] focus:ring-[#0066ff]'}`}
             >
@@ -204,7 +202,7 @@ export function ProductFormPage({ mode }: { mode: 'create' | 'edit' }) {
               id="stall_id"
               value={formData.stall_id}
               onBlur={handleBlur}
-              onChange={e => { setFormData({...formData, stall_id: e.target.value}); setErrors({...errors, stall_id: ''}); }}
+              onChange={e => { setFormData({ ...formData, stall_id: e.target.value }); setErrors({ ...errors, stall_id: '' }); }}
               aria-describedby={errors.stall_id ? 'stall-error' : undefined}
               className={`block w-full px-4 py-2.5 border rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 sm:text-sm transition-all cursor-pointer ${errors.stall_id ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:border-[#0066ff] focus:ring-[#0066ff]'}`}
             >

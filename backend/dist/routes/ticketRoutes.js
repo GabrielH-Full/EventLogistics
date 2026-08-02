@@ -62,12 +62,12 @@ router.post('/', middleware_1.requireAuth, (0, middleware_1.requireRole)('admin'
 // POST /api/tickets/:id/validate
 // A barraca só pode validar tickets que contenham pelo menos um item dela.
 // A conta ADM também pode validar, para dar suporte/fiscalização.
-router.post('/:id/validate', middleware_1.requireAuth, (0, middleware_1.requireRole)('admin', 'stall'), (req, res) => {
+router.post('/:id/validate', middleware_1.requireAuth, (0, middleware_1.requireRole)('admin', 'stall', 'operator'), (req, res) => {
     const ticket = db_1.state.tickets.find(t => t.id === req.params.id);
     if (!ticket) {
         return res.status(404).json({ error: 'Ticket não encontrado.' });
     }
-    if (req.user.role === 'stall') {
+    if (req.user.role === 'stall' || req.user.role === 'operator') {
         const belongsToStall = ticket.items.some(item => {
             const product = db_1.state.products.find(p => p.id === item.productId);
             return product && product.stallId === req.user.stallId;

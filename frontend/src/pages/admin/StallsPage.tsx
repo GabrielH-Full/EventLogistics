@@ -71,10 +71,8 @@ export function StallsPage() {
   };
 
   const columns: Column<any>[] = [
-    { key: 'icon', header: '', render: (s) => <span className="text-xl">{s.icon || '🏪'}</span> },
     { key: 'name', header: 'Nome da Barraca' },
     { key: 'type', header: 'Tipo' },
-    { key: 'users', header: 'Operadores Responsáveis', render: (s) => s.users?.map((u: any) => u.username).join(', ') || '-' },
     { key: 'is_active', header: 'Status', render: (s) => <StatusBadge isActive={s.is_active} /> },
   ];
 

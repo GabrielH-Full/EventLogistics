@@ -31,7 +31,7 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
   useEffect(() => {
     if (mode === 'edit' && id) {
       api.getUsers().then(res => {
-        const user = res.data.find(u => u.id === Number(id));
+        const user = res.data.find((u: any) => String(u.id) === String(id));
         if (user) {
           setFormData({
             username: user.username,
@@ -75,7 +75,7 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
       if (mode === 'edit' && !payload.password) {
         delete payload.password;
       }
-      
+
       if (mode === 'create') {
         await createUser(payload);
         showToast('Usuário criado com sucesso!', 'success');
@@ -109,10 +109,10 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
       </button>
 
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
+        <h1 className="text-2xl font-black text-black tracking-tight">
           {mode === 'create' ? 'Novo Usuário' : 'Editar Usuário'}
         </h1>
-        <p className="text-sm text-gray-400 mt-1">Preencha os dados do acesso.</p>
+        <p className="text-sm text-gray-600 mt-1">Preencha os dados do acesso.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-[#191b24] p-6 rounded-2xl border border-gray-800 space-y-5 shadow-sm">
@@ -124,7 +124,7 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
               type="text"
               value={formData.username}
               onBlur={handleBlur}
-              onChange={e => { setFormData({...formData, username: e.target.value}); setErrors({...errors, username: ''}); }}
+              onChange={e => { setFormData({ ...formData, username: e.target.value }); setErrors({ ...errors, username: '' }); }}
               aria-describedby={errors.username ? 'username-error' : undefined}
               className={`block w-full px-4 py-2.5 border rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 sm:text-sm transition-all ${errors.username ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:border-[#0066ff] focus:ring-[#0066ff]'}`}
             />
@@ -138,7 +138,7 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
               type="password"
               value={formData.password}
               onBlur={handleBlur}
-              onChange={e => { setFormData({...formData, password: e.target.value}); setErrors({...errors, password: ''}); }}
+              onChange={e => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
               aria-describedby={errors.password ? 'password-error' : undefined}
               className={`block w-full px-4 py-2.5 border rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 sm:text-sm transition-all ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:border-[#0066ff] focus:ring-[#0066ff]'}`}
             />
@@ -151,7 +151,7 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
               id="display_name"
               type="text"
               value={formData.display_name}
-              onChange={e => setFormData({...formData, display_name: e.target.value})}
+              onChange={e => setFormData({ ...formData, display_name: e.target.value })}
               className="block w-full px-4 py-2.5 border border-gray-700 rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 focus:ring-[#0066ff] focus:border-[#0066ff] sm:text-sm transition-all"
             />
           </div>
@@ -161,7 +161,7 @@ export function UserFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <select
               id="role"
               value={formData.role}
-              onChange={e => setFormData({...formData, role: e.target.value, stall_ids: e.target.value === 'admin' ? [] : formData.stall_ids})}
+              onChange={e => setFormData({ ...formData, role: e.target.value, stall_ids: e.target.value === 'admin' ? [] : formData.stall_ids })}
               className="block w-full px-4 py-2.5 border border-gray-700 rounded-xl bg-[#121319] text-white focus:outline-none focus:ring-2 focus:ring-[#0066ff] focus:border-[#0066ff] sm:text-sm transition-all cursor-pointer"
             >
               <option value="operator">Operador (Restrito)</option>

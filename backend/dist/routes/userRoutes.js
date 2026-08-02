@@ -29,7 +29,7 @@ const stripPassword = (user) => {
 router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
-        const status = req.query.status; // 'true' | 'false'
+        const isActive = req.query.is_active; // 'true' | 'false'
         const role = req.query.role;
         const page = parseInt(req.query.page || '1', 10);
         const limit = parseInt(req.query.limit || '10', 10);
@@ -42,11 +42,11 @@ router.get('/', async (req, res) => {
             queryArgs.push(`%${search}%`);
             countQueryArgs.push(`%${search}%`);
         }
-        if (status) {
+        if (isActive && (isActive === 'true' || isActive === 'false')) {
             whereClauses.push(`is_active = $${queryArgs.length + 1}`);
-            const isActive = status === 'true';
-            queryArgs.push(isActive);
-            countQueryArgs.push(isActive);
+            const isActiveBool = isActive === 'true';
+            queryArgs.push(isActiveBool);
+            countQueryArgs.push(isActiveBool);
         }
         if (role) {
             whereClauses.push(`role = $${queryArgs.length + 1}`);
@@ -61,7 +61,13 @@ router.get('/', async (req, res) => {
         queryArgs.push(offset);
         const limitIdx = queryArgs.length - 1;
         const offsetIdx = queryArgs.length;
-        const dataResult = await db_1.db.query(`SELECT user_id as id, user_id, username, role, stall_id, display_name, created_at, is_active, updated_at 
+        const dataResult = await db_1.db.query(`SELECT user_id as id, user_id, username, role, stall_id, display_name, created_at, is_active, updated_at,
+         (
+           SELECT COALESCE(jsonb_agg(jsonb_build_object('id', s.stall_id, 'name', s.name)), '[]'::jsonb)
+           FROM stall_users su
+           JOIN stalls s ON s.stall_id = su.stall_id
+           WHERE su.user_id = users.user_id
+         ) as stalls
        FROM users ${whereString} 
        ORDER BY created_at DESC 
        LIMIT $${limitIdx} OFFSET $${offsetIdx}`, queryArgs);
@@ -151,14 +157,15 @@ router.put('/:id', async (req, res) => {
         let query = '';
         let queryArgs = [];
         const display_name = req.body.display_name || username;
+        const isActiveParam = is_active !== undefined ? is_active : null;
         if (password) {
             const password_hash = bcryptjs_1.default.hashSync(password, 12);
-            query = `UPDATE users SET username = $1, password_hash = $2, role = $3, display_name = $4, is_active = $5, updated_at = now() WHERE user_id = $6 RETURNING *`;
-            queryArgs = [username, password_hash, role, display_name, is_active, id];
+            query = `UPDATE users SET username = $1, password_hash = $2, role = $3, display_name = $4, is_active = COALESCE($5, is_active), updated_at = now() WHERE user_id = $6 RETURNING *`;
+            queryArgs = [username, password_hash, role, display_name, isActiveParam, id];
         }
         else {
-            query = `UPDATE users SET username = $1, role = $2, display_name = $3, is_active = $4, updated_at = now() WHERE user_id = $5 RETURNING *`;
-            queryArgs = [username, role, display_name, is_active, id];
+            query = `UPDATE users SET username = $1, role = $2, display_name = $3, is_active = COALESCE($4, is_active), updated_at = now() WHERE user_id = $5 RETURNING *`;
+            queryArgs = [username, role, display_name, isActiveParam, id];
         }
         const updateResult = await db_1.db.query(query, queryArgs);
         if (updateResult.rows.length === 0) {
@@ -205,13 +212,7 @@ router.patch('/:id/status', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        // Verificação de vínculos na tabela stall_users
-        const linkCheck = await db_1.db.query('SELECT COUNT(*) FROM stall_users WHERE user_id = $1', [id]);
-        const count = parseInt(linkCheck.rows[0].count, 10);
-        if (count > 0) {
-            res.status(409).json({ error: 'Não é possível excluir usuário com barracas vinculadas. Desative o usuário em vez de excluí-lo.' });
-            return;
-        }
+        // Excluir usuário (stall_users vinculados serão deletados via ON DELETE CASCADE no BD)
         const deleteResult = await db_1.db.query('DELETE FROM users WHERE user_id = $1 RETURNING user_id', [id]);
         if (deleteResult.rows.length === 0) {
             res.status(404).json({ error: 'Usuário não encontrado.' });

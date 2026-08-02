@@ -3,6 +3,7 @@ import { requireAuth, requireAdmin } from '../middleware';
 import { db, state, save } from '../db';
 import { broadcastState } from '../socket';
 import { randomUUID } from 'crypto';
+import { join } from 'path';
 
 const router = Router();
 
@@ -13,13 +14,13 @@ router.use(requireAdmin);
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const search = (req.query.search as string) || '';
-    const status = req.query.status as string; // 'true' | 'false'
+    const is_active = req.query.is_active as string; // 'true' | 'false'
     const type = req.query.type as string;
     const page = parseInt((req.query.page as string) || '1', 10);
     const limit = parseInt((req.query.limit as string) || '10', 10);
 
     const offset = (page - 1) * limit;
-    
+
     let queryArgs: any[] = [];
     let whereClauses = [];
 
@@ -27,9 +28,9 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       whereClauses.push(`LOWER(name) LIKE LOWER($${queryArgs.length + 1})`);
       queryArgs.push(`%${search}%`);
     }
-    if (status) {
+    if (is_active && (is_active === 'true' || is_active === 'false')) {
       whereClauses.push(`is_active = $${queryArgs.length + 1}`);
-      queryArgs.push(status === 'true');
+      queryArgs.push(is_active === 'true');
     }
     if (type) {
       whereClauses.push(`type = $${queryArgs.length + 1}`);
@@ -74,7 +75,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ error: 'Campos name e type são obrigatórios.' });
     return;
   }
-  
+
   try {
     await db.query('BEGIN');
     const stall_id = randomUUID(); // Since we use TEXT for stall_id
@@ -142,10 +143,11 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
     return;
   }
   try {
+    const isActiveParam = is_active !== undefined ? is_active : null;
     await db.query('BEGIN');
     const updateResult = await db.query(
-      `UPDATE stalls SET name = $1, type = $2, icon = $3, is_active = $4, updated_at = now() WHERE stall_id = $5 RETURNING *`,
-      [name, type, icon, is_active, id]
+      `UPDATE stalls SET name = $1, type = $2, icon = $3, is_active = COALESCE($4, is_active), updated_at = now() WHERE stall_id = $5 RETURNING *`,
+      [name, type, icon, isActiveParam, id]
     );
 
     if (updateResult.rows.length === 0) {
@@ -153,7 +155,7 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ error: 'Barraca não encontrada.' });
       return;
     }
-    
+
     await db.query('DELETE FROM stall_users WHERE stall_id = $1', [id]);
     for (const userId of user_ids) {
       await db.query('INSERT INTO stall_users (stall_id, user_id) VALUES ($1, $2)', [id, userId]);

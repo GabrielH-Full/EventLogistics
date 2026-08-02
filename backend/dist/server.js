@@ -27,9 +27,9 @@ app.use('/api/state', stateRoutes_1.default);
 app.use('/api/tickets', ticketRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/product-categories', productCategoryRoutes_1.default);
+app.use('/api', productRoutes_1.default); // /api/products/:id/production e /api/stalls/:stallId/reset
 app.use('/api/stalls', adminStallRoutes_1.default);
 app.use('/api/products', adminProductRoutes_1.default);
-app.use('/api', productRoutes_1.default); // /api/products/:id/production e /api/stalls/:stallId/reset
 app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
 app.use((err, req, res, next) => {
     console.error(err);

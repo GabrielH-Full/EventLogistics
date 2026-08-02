@@ -88,14 +88,14 @@ router.post(
 router.post(
   '/:id/validate',
   requireAuth,
-  requireRole('admin', 'stall'),
+  requireRole('admin', 'stall', 'operator'),
   (req: Request<{ id: string }>, res: Response) => {
     const ticket = state.tickets.find(t => t.id === req.params.id);
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket não encontrado.' });
     }
 
-    if (req.user!.role === 'stall') {
+    if (req.user!.role === 'stall' || req.user!.role === 'operator') {
       const belongsToStall = ticket.items.some(item => {
         const product = state.products.find(p => p.id === item.productId);
         return product && product.stallId === req.user!.stallId;

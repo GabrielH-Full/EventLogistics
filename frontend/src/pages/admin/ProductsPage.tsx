@@ -84,9 +84,14 @@ export function ProductsPage() {
   };
 
   const columns: Column<any>[] = [
+    {
+      key: 'icon',
+      header: '',
+      render: (p) => p.parent_type === 'food' ? <UtensilsCrossed className="w-5 h-5 text-gray-400" /> : <GlassWater className="w-5 h-5 text-gray-400" />
+    },
     { key: 'name', header: 'Produto' },
     { key: 'parent_type', header: 'Tipo', render: (p) => p.parent_type === 'food' ? 'Alimento' : 'Bebida' },
-    { key: 'category_name', header: 'Categoria', render: (p) => p.category_name || '-' },
+    { key: 'category_name', header: 'Categoria', render: (p) => p.subcategory_name || p.category_name || '-' },
     { key: 'stall_name', header: 'Barraca', render: (p) => p.stall_name || '-' },
     { key: 'price', header: 'Preço', render: (p) => <span className="font-bold text-white">{formatBRL(p.price)}</span> },
     { key: 'is_active', header: 'Status', render: (p) => <StatusBadge isActive={p.is_active} /> },

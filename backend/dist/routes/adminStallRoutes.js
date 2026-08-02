@@ -12,7 +12,7 @@ router.use(middleware_1.requireAdmin);
 router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
-        const status = req.query.status; // 'true' | 'false'
+        const is_active = req.query.is_active; // 'true' | 'false'
         const type = req.query.type;
         const page = parseInt(req.query.page || '1', 10);
         const limit = parseInt(req.query.limit || '10', 10);
@@ -23,9 +23,9 @@ router.get('/', async (req, res) => {
             whereClauses.push(`LOWER(name) LIKE LOWER($${queryArgs.length + 1})`);
             queryArgs.push(`%${search}%`);
         }
-        if (status) {
+        if (is_active && (is_active === 'true' || is_active === 'false')) {
             whereClauses.push(`is_active = $${queryArgs.length + 1}`);
-            queryArgs.push(status === 'true');
+            queryArgs.push(is_active === 'true');
         }
         if (type) {
             whereClauses.push(`type = $${queryArgs.length + 1}`);
@@ -116,8 +116,9 @@ router.put('/:id', async (req, res) => {
         return;
     }
     try {
+        const isActiveParam = is_active !== undefined ? is_active : null;
         await db_1.db.query('BEGIN');
-        const updateResult = await db_1.db.query(`UPDATE stalls SET name = $1, type = $2, icon = $3, is_active = $4, updated_at = now() WHERE stall_id = $5 RETURNING *`, [name, type, icon, is_active, id]);
+        const updateResult = await db_1.db.query(`UPDATE stalls SET name = $1, type = $2, icon = $3, is_active = COALESCE($4, is_active), updated_at = now() WHERE stall_id = $5 RETURNING *`, [name, type, icon, isActiveParam, id]);
         if (updateResult.rows.length === 0) {
             await db_1.db.query('ROLLBACK');
             res.status(404).json({ error: 'Barraca não encontrada.' });

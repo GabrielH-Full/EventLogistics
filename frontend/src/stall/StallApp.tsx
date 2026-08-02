@@ -11,10 +11,11 @@ export default function StallApp() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { products, tickets, loading } = useAppData();
+  const { products, tickets, loading, stalls } = useAppData();
 
   const stallId = user!.stallId!;
-  const stallName = user!.displayName;
+  const stallObjet = stalls.find(s => s.id === stallId);
+  const stallName = stallObjet ? stallObjet.name : user!.displayName;
 
   // Cada barraca só enxerga os próprios produtos, e só tickets que tenham
   // pelo menos um item dela - o resto do evento fica invisível para ela.
@@ -54,18 +55,16 @@ export default function StallApp() {
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             <button
               onClick={() => navigate('/stall/production')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                isProduction ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${isProduction ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
             >
               <UtensilsCrossed className="w-3.5 h-3.5" />
               <span>Produção / Estoque</span>
             </button>
             <button
               onClick={() => navigate('/stall/validate')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                isValidate ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${isValidate ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
             >
               <QrCode className="w-3.5 h-3.5" />
               <span>Validar Tickets</span>

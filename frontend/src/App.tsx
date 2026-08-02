@@ -28,7 +28,7 @@ function AppRoutes() {
       </Route>
 
       {/* Área da Barraca: produção/estoque + validação de tickets, restrita à própria barraca. */}
-      <Route element={<ProtectedRoute allowedRoles={['stall']} />}>
+      <Route element={<ProtectedRoute allowedRoles={['stall', 'operator']} />}>
         <Route path="/stall/*" element={<StallApp />} />
       </Route>
 
