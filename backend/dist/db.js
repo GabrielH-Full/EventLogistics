@@ -12,7 +12,7 @@ const pg_1 = require("pg");
 const seedData_1 = require("./seedData");
 const DATA_FILE = path_1.default.join(__dirname, '..', 'data.json');
 exports.db = new pg_1.Pool({
-    connectionString: process.env.DATABASE_URL || 'postgres://eventlogistics:eventlogistics_secret@localhost:5432/eventlogistics_db'
+    connectionString: process.env.DATABASE_URL || 'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
 });
 function load() {
     if (fs_1.default.existsSync(DATA_FILE)) {

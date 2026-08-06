@@ -7,7 +7,7 @@ import { AppState } from './types/domain';
 const DATA_FILE = path.join(__dirname, '..', 'data.json');
 
 export const db = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://eventlogistics:eventlogistics_secret@localhost:5432/eventlogistics_db'
+  connectionString: process.env.DATABASE_URL || 'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
 });
 
 function load(): AppState {

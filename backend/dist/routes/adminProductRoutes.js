@@ -14,7 +14,7 @@ const syncStateProducts = async () => {
         const productsRes = await db_1.db.query('SELECT * FROM products WHERE is_active = true');
         const dbProducts = productsRes.rows;
         // Update matching products in state or add new ones
-        dbProducts.forEach(dbP => {
+        dbProducts.forEach((dbP) => {
             const pIdx = db_1.state.products.findIndex(sp => sp.id === dbP.product_id);
             if (pIdx >= 0) {
                 db_1.state.products[pIdx].name = dbP.name;
@@ -41,7 +41,7 @@ const syncStateProducts = async () => {
             }
         });
         // Remove inactive from state
-        const activeIds = dbProducts.map(dp => dp.product_id);
+        const activeIds = dbProducts.map((dp) => dp.product_id);
         db_1.state.products = db_1.state.products.filter(sp => activeIds.includes(sp.id));
         (0, db_1.save)();
         (0, socket_1.broadcastState)();

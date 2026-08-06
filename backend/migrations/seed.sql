@@ -9,10 +9,10 @@ ON CONFLICT (stall_id) DO NOTHING;
 
 -- 2. Usuários (Hashes bcrypt das senhas de demonstração: admin123, pastel123, churrasco123, doces123)
 INSERT INTO users (username, password_hash, role, stall_id, display_name) VALUES
-  ('admin', '$2a$10$wN9aJp5lWk5sV0bVf8dJ5.4nS3jE3wP5L0bVf8dJ5.4nS3jE3wP5L', 'admin', NULL, 'Caixa Central'),
-  ('pastel', '$2a$10$wN9aJp5lWk5sV0bVf8dJ5.4nS3jE3wP5L0bVf8dJ5.4nS3jE3wP5L', 'operator', 'pastel', 'Barraca do Pastel'),
-  ('churrasco', '$2a$10$wN9aJp5lWk5sV0bVf8dJ5.4nS3jE3wP5L0bVf8dJ5.4nS3jE3wP5L', 'operator', 'churrasco', 'Barraca do Churrasco'),
-  ('doces', '$2a$10$wN9aJp5lWk5sV0bVf8dJ5.4nS3jE3wP5L0bVf8dJ5.4nS3jE3wP5L', 'operator', 'doces', 'Barraca de Doces')
+  ('admin', '$2a$10$HDfl5Hss11Iti0a.JsnRA.o86q8tJ61Gfp8mRFFdxobQ4bWcMBPHC', 'admin', NULL, 'Caixa Central'),
+  ('pastel', '$2a$10$u/cRKPgBV0jq8MXmB.UFqeqF6ED/inllFi9/k6N3OfDNkaEL8DyXK', 'operator', 'pastel', 'Barraca do Pastel'),
+  ('churrasco', '$2a$10$yth7MCZJQPgV.Zt7oFhERuyy27GoJQ.0YwSBReBB7IB5YMHPjV2zu', 'operator', 'churrasco', 'Barraca do Churrasco'),
+  ('doces', '$2a$10$u3BKTvgt5eBt3lF5afBQz.2p2uhEyDj2RqF0EzWCd/4YRIUKlbWGu', 'operator', 'doces', 'Barraca de Doces')
 ON CONFLICT (username) DO NOTHING;
 
 -- 3. Produtos
