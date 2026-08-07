@@ -1,5 +1,10 @@
 import { Pool } from 'pg';
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is missing.');
+}
+
+
 export const db = new Pool({
   connectionString: process.env.DATABASE_URL ||
     'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
@@ -7,8 +12,8 @@ export const db = new Pool({
 
 export interface PublicState {
   products: Record<string, unknown>[];
-  stalls:   Record<string, unknown>[];
-  tickets:  Record<string, unknown>[];
+  stalls: Record<string, unknown>[];
+  tickets: Record<string, unknown>[];
 }
 
 export async function fetchPublicState(): Promise<PublicState> {
@@ -48,12 +53,12 @@ export async function fetchPublicState(): Promise<PublicState> {
       LIMIT 100
     `),
   ]);
-  
+
   // Transform price to Number as PostgreSQL numeric comes as string, 
   // also add 'time' field to tickets which frontend expects
   return {
     products: products.rows.map(p => ({ ...p, price: Number(p.price) })),
-    stalls:   stalls.rows,
-    tickets:  tickets.rows.map(t => ({ ...t, total: Number(t.total), time: 'Agora' })),
+    stalls: stalls.rows,
+    tickets: tickets.rows.map(t => ({ ...t, total: Number(t.total), time: 'Agora' })),
   };
 }
