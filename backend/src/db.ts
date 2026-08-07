@@ -1,8 +1,11 @@
 import { Pool } from 'pg';
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is missing.');
+}
+
 export const db = new Pool({
-  connectionString: process.env.DATABASE_URL ||
-    'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
+  connectionString: process.env.DATABASE_URL
 });
 
 export interface PublicState {

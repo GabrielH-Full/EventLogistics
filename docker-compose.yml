@@ -5,10 +5,8 @@ services:
     image: postgres:16-alpine
     container_name: eventlogistics_db
     restart: always
-    environment:
-      POSTGRES_USER: eventlogistics
-      POSTGRES_PASSWORD: eventlogistics_secret
-      POSTGRES_DB: eventlogistics_db
+    env_file:
+      - ./backend/.env
     ports:
       - "5433:5432"
     volumes:
