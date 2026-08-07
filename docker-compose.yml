@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U eventlogistics -d eventlogistics_db"]
+      test: [ "CMD-SHELL", "pg_isready -U eventlogistics -d eventlogistics_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
