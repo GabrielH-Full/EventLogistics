@@ -32,12 +32,12 @@ export function DataTable<T>({
   onPageChange,
   actions
 }: DataTableProps<T>) {
-  
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-bold text-white mb-2">Erro ao carregar dados</h3>
+        <h3 className="text-lg font-bold text-black mb-2">Erro ao carregar dados</h3>
         <p className="text-gray-400 mb-6">{error}</p>
         {onRetry && (
           <button onClick={onRetry} className="bg-[#0066ff] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-blue-600 transition-all cursor-pointer">
