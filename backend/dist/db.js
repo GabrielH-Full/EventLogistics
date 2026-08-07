@@ -1,46 +1,54 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.state = exports.db = void 0;
-exports.save = save;
-exports.publicState = publicState;
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
+exports.db = void 0;
+exports.fetchPublicState = fetchPublicState;
 const pg_1 = require("pg");
-const seedData_1 = require("./seedData");
-const DATA_FILE = path_1.default.join(__dirname, '..', 'data.json');
 exports.db = new pg_1.Pool({
-    connectionString: process.env.DATABASE_URL || 'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
+    connectionString: process.env.DATABASE_URL ||
+        'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
 });
-function load() {
-    if (fs_1.default.existsSync(DATA_FILE)) {
-        try {
-            const raw = fs_1.default.readFileSync(DATA_FILE, 'utf-8');
-            return JSON.parse(raw);
-        }
-        catch (err) {
-            console.error('Falha ao ler data.json, recriando estado inicial.', err);
-        }
-    }
-    const initial = (0, seedData_1.buildInitialState)();
-    persist(initial);
-    return initial;
-}
-function persist(state) {
-    fs_1.default.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), 'utf-8');
-}
-// Estado vive em memória durante a execução; toda mutação chama save() no fim.
-exports.state = load();
-function save() {
-    persist(exports.state);
-}
-// Dados expostos ao frontend nunca incluem passwordHash.
-function publicState() {
+async function fetchPublicState() {
+    const [products, stalls, tickets] = await Promise.all([
+        exports.db.query(`
+      SELECT 
+        product_id as id, name, category, price, stock, max_stock as "maxStock", unit, image, stall_id as "stallId"
+      FROM products 
+      WHERE is_active = true 
+      ORDER BY name
+    `),
+        exports.db.query(`
+      SELECT stall_id as id, name, icon 
+      FROM stalls 
+      WHERE is_active = true 
+      ORDER BY name
+    `),
+        exports.db.query(`
+      SELECT t.ticket_id as id, t.code, t.total, t.status, t.created_at as timestamp,
+        COALESCE(
+          jsonb_agg(
+            jsonb_build_object(
+              'productId', ti.product_id,
+              'name', p.name,
+              'category', p.category,
+              'quantity', ti.quantity,
+              'price', ti.unit_price
+            )
+          ) FILTER (WHERE ti.product_id IS NOT NULL),
+          '[]'::jsonb
+        ) as items
+      FROM tickets t
+      LEFT JOIN ticket_items ti ON t.ticket_id = ti.ticket_id
+      LEFT JOIN products p ON ti.product_id = p.product_id
+      GROUP BY t.ticket_id
+      ORDER BY t.created_at DESC 
+      LIMIT 100
+    `),
+    ]);
+    // Transform price to Number as PostgreSQL numeric comes as string, 
+    // also add 'time' field to tickets which frontend expects
     return {
-        products: exports.state.products,
-        stalls: exports.state.stalls,
-        tickets: exports.state.tickets
+        products: products.rows.map(p => ({ ...p, price: Number(p.price) })),
+        stalls: stalls.rows,
+        tickets: tickets.rows.map(t => ({ ...t, total: Number(t.total), time: 'Agora' })),
     };
 }

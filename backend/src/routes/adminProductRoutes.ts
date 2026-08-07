@@ -1,55 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware';
-import { db, state, save } from '../db';
+import { db } from '../db';
 import { broadcastState } from '../socket';
 import { randomUUID } from 'crypto';
-import { Product } from '../types/domain';
+import { logAudit } from '../audit';
 
 const router = Router();
 
 router.use(requireAuth);
 router.use(requireAdmin);
 
-// Helper function to sync state products based on database queries
-const syncStateProducts = async () => {
-  try {
-    const productsRes = await db.query('SELECT * FROM products WHERE is_active = true');
-    const dbProducts = productsRes.rows;
-    // Update matching products in state or add new ones
-    dbProducts.forEach((dbP: any) => {
-      const pIdx = state.products.findIndex(sp => sp.id === dbP.product_id);
-      if (pIdx >= 0) {
-        state.products[pIdx].name = dbP.name;
-        state.products[pIdx].category = dbP.category;
-        state.products[pIdx].price = Number(dbP.price);
-        state.products[pIdx].stallId = dbP.stall_id;
-        state.products[pIdx].image = dbP.image;
-        state.products[pIdx].stock = dbP.stock;
-        state.products[pIdx].maxStock = dbP.max_stock;
-        state.products[pIdx].unit = dbP.unit;
-      } else {
-        state.products.push({
-          id: dbP.product_id,
-          name: dbP.name,
-          category: dbP.category,
-          price: Number(dbP.price),
-          stallId: dbP.stall_id,
-          image: dbP.image,
-          stock: dbP.stock,
-          maxStock: dbP.max_stock,
-          unit: dbP.unit
-        });
-      }
-    });
-    // Remove inactive from state
-    const activeIds = dbProducts.map((dp: any) => dp.product_id);
-    state.products = state.products.filter(sp => activeIds.includes(sp.id));
-    save();
-    broadcastState();
-  } catch(e) {
-    console.error('Error syncing products state:', e);
-  }
-};
+
 
 // GET /api/products
 router.get('/', async (req: Request, res: Response): Promise<void> => {
@@ -140,7 +101,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       [product_id, stall_id, category_id, name, price, is_active, 0, maxStock, unit, image, categoryText]
     );
 
-    await syncStateProducts();
+    logAudit({
+      userId: req.user!.sub,
+      action: 'PRODUCT_CREATED',
+      entityType: 'products',
+      entityId: product_id,
+      before: null,
+      after: insertResult.rows[0],
+    });
+    broadcastState();
     res.json({ data: insertResult.rows[0], message: 'Produto criado.' });
   } catch (err) {
     console.error('Error creating product:', err);
@@ -190,7 +159,15 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ error: 'Produto não encontrado.' });
       return;
     }
-    await syncStateProducts();
+    logAudit({
+      userId: req.user!.sub,
+      action: 'PRODUCT_UPDATED',
+      entityType: 'products',
+      entityId: id,
+      before: null,
+      after: result.rows[0],
+    });
+    broadcastState();
     res.json({ data: result.rows[0], message: 'Produto atualizado.' });
   } catch (err) {
     console.error('Error updating product:', err);
@@ -212,7 +189,15 @@ router.patch('/:id/status', async (req: Request, res: Response): Promise<void> =
       'UPDATE products SET is_active=$1, updated_at=now() WHERE product_id=$2 RETURNING *',
       [!current, id]
     );
-    await syncStateProducts();
+    logAudit({
+      userId: req.user!.sub,
+      action: 'PRODUCT_UPDATED',
+      entityType: 'products',
+      entityId: id,
+      before: { is_active: current },
+      after: result.rows[0],
+    });
+    broadcastState();
     res.json({ data: result.rows[0], message: 'Status atualizado.' });
   } catch (err) {
     console.error('Error patching product:', err);
@@ -235,7 +220,15 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ error: 'Produto não encontrado.' });
       return;
     }
-    await syncStateProducts();
+    logAudit({
+      userId: req.user!.sub,
+      action: 'PRODUCT_DELETED',
+      entityType: 'products',
+      entityId: id,
+      before: deleteResult.rows[0],
+      after: null,
+    });
+    broadcastState();
     res.json({ message: 'Produto excluído.' });
   } catch (err) {
     console.error('Error deleting product:', err);

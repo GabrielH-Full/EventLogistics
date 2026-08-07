@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import http from 'http';
-import { publicState } from './db';
+import { fetchPublicState } from './db';
 
 let io: Server | null = null;
 
@@ -9,10 +9,13 @@ export function initSocket(httpServer: http.Server, corsOrigins: string[]): Serv
     cors: { origin: corsOrigins, credentials: true }
   });
 
-  io.on('connection', socket => {
-    // Ao conectar, o cliente já recebe o estado atual, então caixa e
-    // barraca nunca ficam desatualizados mesmo se o socket demorar a conectar.
-    socket.emit('state:update', publicState());
+  io.on('connection', async (socket) => {
+    try {
+      const state = await fetchPublicState();
+      socket.emit('state:update', state);
+    } catch (err) {
+      console.error('[socket] Falha ao emitir estado inicial:', err);
+    }
 
     socket.on('disconnect', () => {});
   });
@@ -20,10 +23,14 @@ export function initSocket(httpServer: http.Server, corsOrigins: string[]): Serv
   return io;
 }
 
-// Chamado depois de toda mutação (venda, produção, validação) para
-// avisar todo mundo conectado (caixa central + todas as barracas) na hora.
-export function broadcastState(): void {
-  if (io) {
-    io.emit('state:update', publicState());
+// Chamado depois de toda mutação para avisar todos os clientes conectados
+export async function broadcastState(): Promise<void> {
+  if (!io) return;
+  try {
+    const state = await fetchPublicState();
+    io.emit('state:update', state);
+  } catch (err) {
+    console.error('[broadcastState] Falha ao buscar estado do banco:', err);
+    // Silencia — clientes se recuperam via reconexao WebSocket ou GET /api/state
   }
 }
