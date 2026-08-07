@@ -3,9 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.db = void 0;
 exports.fetchPublicState = fetchPublicState;
 const pg_1 = require("pg");
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is missing.');
+}
 exports.db = new pg_1.Pool({
-    connectionString: process.env.DATABASE_URL ||
-        'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
+    connectionString: process.env.DATABASE_URL
 });
 async function fetchPublicState() {
     const [products, stalls, tickets] = await Promise.all([
