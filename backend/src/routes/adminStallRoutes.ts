@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware';
-import { db, state, save } from '../db';
+import { db } from '../db';
 import { broadcastState } from '../socket';
 import { randomUUID } from 'crypto';
+import { logAudit } from '../audit';
 import { join } from 'path';
 
 const router = Router();
@@ -96,13 +97,14 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     }
     await db.query('COMMIT');
 
-    // Sync to memory state
-    state.stalls.push({
-      id: stall_id,
-      name,
-      icon
+    logAudit({
+      userId: req.user!.sub,
+      action: 'STALL_CREATED',
+      entityType: 'stalls',
+      entityId: stall_id,
+      before: null,
+      after: newStall,
     });
-    save();
     broadcastState();
 
     res.json({ data: newStall, message: 'Barraca criada.' });
@@ -162,13 +164,15 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
     }
     await db.query('COMMIT');
 
-    // Sync state memory
-    const memoryIdx = state.stalls.findIndex(s => s.id === id);
-    if (memoryIdx >= 0) {
-      state.stalls[memoryIdx] = { ...state.stalls[memoryIdx], name, icon };
-      save();
-      broadcastState();
-    }
+    logAudit({
+      userId: req.user!.sub,
+      action: 'STALL_UPDATED',
+      entityType: 'stalls',
+      entityId: id,
+      before: null,
+      after: updateResult.rows[0],
+    });
+    broadcastState();
 
     res.json({ data: updateResult.rows[0], message: 'Barraca atualizada.' });
   } catch (err) {
@@ -192,6 +196,15 @@ router.patch('/:id/status', async (req: Request, res: Response): Promise<void> =
       'UPDATE stalls SET is_active = $1, updated_at = now() WHERE stall_id = $2 RETURNING *',
       [!current, id]
     );
+    logAudit({
+      userId: req.user!.sub,
+      action: 'STALL_UPDATED',
+      entityType: 'stalls',
+      entityId: id,
+      before: { is_active: current },
+      after: updateResult.rows[0],
+    });
+    broadcastState();
     res.json({ data: updateResult.rows[0], message: 'Status atualizado.' });
   } catch (err) {
     console.error('Error patching stall:', err);
@@ -217,13 +230,15 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Remove from memory
-    const memoryIdx = state.stalls.findIndex(s => s.id === id);
-    if (memoryIdx >= 0) {
-      state.stalls.splice(memoryIdx, 1);
-      save();
-      broadcastState();
-    }
+    logAudit({
+      userId: req.user!.sub,
+      action: 'STALL_DELETED',
+      entityType: 'stalls',
+      entityId: id,
+      before: deleteResult.rows[0],
+      after: null,
+    });
+    broadcastState();
 
     res.json({ message: 'Barraca excluída.' });
   } catch (err) {
