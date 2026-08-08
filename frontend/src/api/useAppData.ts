@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Product, Stall, Ticket } from '../types';
 import { api } from './client';
 import { getSocket } from './socket';
+import { useAuth } from '../auth/AuthContext';
 
 interface AppDataState {
   products: Product[];
@@ -16,6 +17,8 @@ interface AppDataState {
 // todas as barracas usam esse mesmo hook, então tudo fica sincronizado
 // automaticamente, sem precisar dar refresh.
 export function useAppData() {
+  const { user } = useAuth();
+  
   const [state, setState] = useState<AppDataState>({
     products: [],
     stalls: [],
@@ -43,7 +46,7 @@ export function useAppData() {
         setState(prev => ({ ...prev, loading: false, error: err.message }));
       });
 
-    const socket = getSocket();
+    const socket = getSocket(user?.stallId || undefined);
     const onUpdate = (data: { products: Product[]; stalls: Stall[]; tickets: Ticket[] }) => {
       setState(prev => ({ ...prev, products: data.products, stalls: data.stalls, tickets: data.tickets, loading: false }));
     };

@@ -152,4 +152,60 @@ router.post('/:id/validate', middleware_1.requireAuth, (0, middleware_1.requireR
         client.release();
     }
 });
+// POST /api/tickets/validate (Nova Lógica PRD: Atomic validation on stall)
+router.post('/validate', middleware_1.requireAuth, (0, middleware_1.requireRole)('admin', 'operator', 'stall'), async (req, res) => {
+    const { items } = req.body;
+    const stallId = req.user.stallId;
+    const operatorId = Number(req.user.sub);
+    if (!stallId) {
+        return res.status(403).json({ error: 'Operador não associado a uma barraca.' });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'O carrinho está vazio.' });
+    }
+    const ticketId = (0, crypto_1.randomUUID)();
+    try {
+        await (0, db_1.validateTicket)(ticketId, stallId, operatorId, items);
+        (0, audit_1.logAudit)({
+            userId: operatorId,
+            action: 'TICKET_VALIDATED',
+            entityType: 'tickets',
+            entityId: ticketId,
+        });
+        (0, socket_1.broadcastToStall)(stallId, 'INVENTORY_UPDATED', { ticketId });
+        (0, socket_1.broadcastToStall)(stallId, 'TICKET_VALIDATED', { ticketId });
+        // Also broadcast global state for dashboard consistency
+        (0, socket_1.broadcastState)();
+        res.status(201).json({ success: true, ticketId });
+    }
+    catch (err) {
+        console.error('[validateTicket Error]:', err);
+        res.status(400).json({ error: err.message || 'Erro ao validar ticket.' });
+    }
+});
+// POST /api/tickets/:id/revert (Nova Lógica PRD: Revert validation)
+router.post('/:id/revert', middleware_1.requireAuth, (0, middleware_1.requireRole)('admin', 'operator', 'stall'), async (req, res) => {
+    const { id } = req.params;
+    const stallId = req.user.stallId;
+    const operatorId = req.user.sub;
+    if (!stallId) {
+        return res.status(403).json({ error: 'Operador não associado a uma barraca.' });
+    }
+    try {
+        await (0, db_1.revertTicket)(id);
+        (0, audit_1.logAudit)({
+            userId: operatorId,
+            action: 'TICKET_REVERTED',
+            entityType: 'tickets',
+            entityId: id,
+        });
+        (0, socket_1.broadcastToStall)(stallId, 'INVENTORY_UPDATED', { ticketId: id });
+        (0, socket_1.broadcastState)();
+        res.status(200).json({ success: true, ticketId: id });
+    }
+    catch (err) {
+        console.error('[revertTicket Error]:', err);
+        res.status(400).json({ error: err.message || 'Erro ao reverter ticket.' });
+    }
+});
 exports.default = router;

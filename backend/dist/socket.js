@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initSocket = initSocket;
+exports.broadcastToStall = broadcastToStall;
 exports.broadcastState = broadcastState;
 const socket_io_1 = require("socket.io");
 const db_1 = require("./db");
@@ -10,6 +11,10 @@ function initSocket(httpServer, corsOrigins) {
         cors: { origin: corsOrigins, credentials: true }
     });
     io.on('connection', async (socket) => {
+        const stallId = socket.handshake.query.stallId;
+        if (stallId) {
+            socket.join(`stall_${stallId}`);
+        }
         try {
             const state = await (0, db_1.fetchPublicState)();
             socket.emit('state:update', state);
@@ -20,6 +25,11 @@ function initSocket(httpServer, corsOrigins) {
         socket.on('disconnect', () => { });
     });
     return io;
+}
+function broadcastToStall(stallId, event, data) {
+    if (!io)
+        return;
+    io.to(`stall_${stallId}`).emit(event, data);
 }
 // Chamado depois de toda mutação para avisar todos os clientes conectados
 async function broadcastState() {

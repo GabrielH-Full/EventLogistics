@@ -50,6 +50,12 @@ export const api = {
   validateTicket: (ticketId: string) =>
     request<{ ticket: any }>(`/api/tickets/${ticketId}/validate`, { method: 'POST' }),
 
+  validateStallTicket: (items: { productId: string; quantity: number; unitPrice: number }[]) =>
+    request<{ success: boolean; ticketId: string }>('/api/tickets/validate', { method: 'POST', body: JSON.stringify({ items }) }),
+
+  revertTicket: (ticketId: string) =>
+    request<{ success: boolean }>(`/api/tickets/${ticketId}/revert`, { method: 'POST' }),
+
   addProduction: (productId: string, amount: number) =>
     request<{ product: any }>(`/api/products/${productId}/production`, {
       method: 'POST',

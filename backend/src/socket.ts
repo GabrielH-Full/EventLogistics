@@ -10,6 +10,11 @@ export function initSocket(httpServer: http.Server, corsOrigins: string[]): Serv
   });
 
   io.on('connection', async (socket) => {
+    const stallId = socket.handshake.query.stallId;
+    if (stallId) {
+      socket.join(`stall_${stallId}`);
+    }
+
     try {
       const state = await fetchPublicState();
       socket.emit('state:update', state);
@@ -21,6 +26,11 @@ export function initSocket(httpServer: http.Server, corsOrigins: string[]): Serv
   });
 
   return io;
+}
+
+export function broadcastToStall(stallId: string, event: string, data: any): void {
+  if (!io) return;
+  io.to(`stall_${stallId}`).emit(event, data);
 }
 
 // Chamado depois de toda mutação para avisar todos os clientes conectados
