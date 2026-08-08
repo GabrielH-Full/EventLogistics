@@ -31,7 +31,7 @@ export interface Ticket {
   total: number;
   time: string; // e.g. "Agora", "3 min atrás"
   timestamp: string; // ISO string vindo do backend
-  status: 'pending' | 'validated';
+  status: 'pending' | 'validated' | 'reverted';
 }
 
 export type UserRole = 'admin' | 'stall' | 'operator';

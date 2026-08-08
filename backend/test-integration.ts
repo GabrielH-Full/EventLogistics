@@ -167,6 +167,74 @@ async function runTests() {
     console.error('Erro teste 9.8', e);
   }
 
+  // --- TAREFA 5.0: TESTES E2E E CONCORRÊNCIA DO NOVO PRD ---
+  try {
+    console.log('\\n--- Teste E2E Validação Atômica (Novo PRD) ---');
+    // Adicionar estoque para o teste de concorrência
+    await fetch(`${BASE_URL}/products/${productId}/production`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${operatorToken}` },
+      body: JSON.stringify({ amount: 10 })
+    });
+
+    let newTicketId = '';
+    
+    // 5.1 Teste fluxo comum
+    const valRes = await fetch(`${BASE_URL}/tickets/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${operatorToken}` },
+      body: JSON.stringify({ items: [{ productId, quantity: 1, unitPrice: 10 }] })
+    });
+    if (valRes.status === 201) {
+      const v = await valRes.json() as any;
+      newTicketId = v.ticketId;
+      console.log('✅ Teste 5.1: /api/tickets/validate criou e debitou estoque atômicamente.');
+    } else {
+      console.error('❌ Teste 5.1 falhou', valRes.status, await valRes.text());
+    }
+
+    // 5.1 Fluxo de estorno
+    const revRes = await fetch(`${BASE_URL}/tickets/${newTicketId}/revert`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${operatorToken}` }
+    });
+    if (revRes.status === 200) {
+      console.log('✅ Teste 5.1: /api/tickets/:id/revert estornou com sucesso.');
+    } else {
+      console.error('❌ Teste 5.1 (revert) falhou', revRes.status, await revRes.text());
+    }
+
+    // 5.2 Teste concorrência (20 requests simultâneos para apenas 10 itens no estoque)
+    console.log('Disparando 20 validações simultâneas para um estoque de 10 unidades (Atomic Race Condition)...');
+    
+    const promises = [];
+    for(let i=0; i<20; i++) {
+      promises.push(fetch(`${BASE_URL}/tickets/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${operatorToken}` },
+        body: JSON.stringify({ items: [{ productId, quantity: 1, unitPrice: 10 }] })
+      }));
+    }
+    const results = await Promise.all(promises);
+    const successes = results.filter(r => r.status === 201).length;
+    const errors = results.filter(r => r.status === 400 || r.status === 500).length;
+    
+    console.log(`Resultados da concorrência: ${successes} sucessos, ${errors} falhas ou rejeições por falta de estoque.`);
+    
+    const pCheck2 = await db.query('SELECT stock FROM products WHERE product_id = $1', [productId]);
+    const finalStock = pCheck2.rows[0].stock;
+    console.log(`Estoque final após concorrência: ${finalStock}`);
+    
+    if (successes === 10 && finalStock === 0) {
+      console.log('✅ Teste 5.2: Concorrência tratada com sucesso absoluto no PostgreSQL! Nenhum saldo negativo ocorreu (Race condition prevenido).');
+    } else {
+      console.error('❌ Teste 5.2 falhou: inconsistência no saldo ou sucessos.', { successes, finalStock });
+    }
+
+  } catch (e) {
+    console.error('Erro na validação atômica', e);
+  }
+
   // 9.9 Testar WebSocket
   console.log('Conectando WebSocket...');
   const socket = io('http://localhost:4000');

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../db';
+import { db, validateTicket, revertTicket, TicketItemInput } from '../db';
 import { requireAuth, requireRole } from '../middleware';
-import { broadcastState } from '../socket';
+import { broadcastState, broadcastToStall } from '../socket';
 import { logAudit } from '../audit';
 import { randomUUID } from 'crypto';
 
@@ -129,6 +129,50 @@ router.post(
   }
 );
 
+// POST /api/tickets/validate (Nova Lógica PRD: Atomic validation on stall)
+router.post(
+  '/validate',
+  requireAuth,
+  requireRole('admin', 'operator', 'stall'),
+  async (req: Request<{}, {}, { items: TicketItemInput[] }>, res: Response) => {
+    const { items } = req.body;
+    const stallId = req.user!.stallId;
+    const operatorId = Number(req.user!.sub);
+
+    if (!stallId) {
+      return res.status(403).json({ error: 'Operador não associado a uma barraca.' });
+    }
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'O carrinho está vazio.' });
+    }
+
+    const ticketId = randomUUID();
+
+    try {
+      await validateTicket(ticketId, stallId, operatorId, items);
+
+      logAudit({
+        userId: operatorId,
+        action: 'TICKET_VALIDATED',
+        entityType: 'tickets',
+        entityId: ticketId,
+      });
+
+      broadcastToStall(stallId, 'INVENTORY_UPDATED', { ticketId });
+      broadcastToStall(stallId, 'TICKET_VALIDATED', { ticketId });
+      
+      // Also broadcast global state for dashboard consistency
+      broadcastState();
+
+      res.status(201).json({ success: true, ticketId });
+    } catch (err: any) {
+      console.error('[validateTicket Error]:', err);
+      res.status(400).json({ error: err.message || 'Erro ao validar ticket.' });
+    }
+  }
+);
+
 // POST /api/tickets/:id/validate
 // A barraca só pode validar tickets que contenham pelo menos um item dela.
 router.post(
@@ -214,6 +258,43 @@ router.post(
       res.status(500).json({ error: 'Erro interno ao validar ticket.' });
     } finally {
       client.release();
+    }
+  }
+);
+
+
+
+// POST /api/tickets/:id/revert (Nova Lógica PRD: Revert validation)
+router.post(
+  '/:id/revert',
+  requireAuth,
+  requireRole('admin', 'operator', 'stall'),
+  async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const stallId = req.user!.stallId;
+    const operatorId = req.user!.sub;
+
+    if (!stallId) {
+      return res.status(403).json({ error: 'Operador não associado a uma barraca.' });
+    }
+
+    try {
+      await revertTicket(id);
+
+      logAudit({
+        userId: operatorId,
+        action: 'TICKET_REVERTED',
+        entityType: 'tickets',
+        entityId: id,
+      });
+
+      broadcastToStall(stallId, 'INVENTORY_UPDATED', { ticketId: id });
+      broadcastState();
+
+      res.status(200).json({ success: true, ticketId: id });
+    } catch (err: any) {
+      console.error('[revertTicket Error]:', err);
+      res.status(400).json({ error: err.message || 'Erro ao reverter ticket.' });
     }
   }
 );
