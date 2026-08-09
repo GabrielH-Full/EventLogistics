@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AuthUser } from '../types';
 import { api, ApiError } from '../api/client';
+import { disconnectSocket } from '../api/socket';
 
 const TOKEN_KEY = 'eventlogistics_token';
 
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    disconnectSocket(); // Encerra a conexão WebSocket autenticada
     setUser(null);
   }, []);
 

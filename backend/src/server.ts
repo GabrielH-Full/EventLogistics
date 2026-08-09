@@ -2,6 +2,8 @@ import 'dotenv/config';
 import http from 'http';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 import authRoutes from './routes/authRoutes';
 import stateRoutes from './routes/stateRoutes';
@@ -17,8 +19,17 @@ const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
 
 const app = express();
+app.use(helmet());
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // limite de 10 tentativas por IP
+  message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
+});
+app.use('/api/auth/login', loginLimiter);
 
 app.get('/api/health', (req: Request, res: Response) => res.json({ ok: true }));
 

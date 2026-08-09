@@ -4,6 +4,8 @@ import { api } from './client';
 import { getSocket } from './socket';
 import { useAuth } from '../auth/AuthContext';
 
+const TOKEN_KEY = 'eventlogistics_token';
+
 interface AppDataState {
   products: Product[];
   stalls: Stall[];
@@ -46,7 +48,9 @@ export function useAppData() {
         setState(prev => ({ ...prev, loading: false, error: err.message }));
       });
 
-    const socket = getSocket(user?.stallId || undefined);
+    // Passa o JWT para que o backend possa autenticar a conexão WebSocket
+    const token = localStorage.getItem(TOKEN_KEY);
+    const socket = getSocket(token);
     const onUpdate = (data: { products: Product[]; stalls: Stall[]; tickets: Ticket[] }) => {
       setState(prev => ({ ...prev, products: data.products, stalls: data.stalls, tickets: data.tickets, loading: false }));
     };
