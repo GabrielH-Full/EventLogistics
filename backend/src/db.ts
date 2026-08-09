@@ -6,9 +6,12 @@ if (!process.env.DATABASE_URL) {
 
 
 export const db = new Pool({
-  connectionString: process.env.DATABASE_URL ||
-    'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // 10 atendentes + 5 operadores + 5 monitores
+  connectionTimeoutMillis: 5_000, // 5 segundos para conectar
+  idleTimeoutMillis: 30_000, // 30 segundos sem usar a conexão
 });
+db.on('connect', client => client.query('SET statement_timeout = 10000')); // 10 segundos para executar uma query
 
 export interface PublicState {
   products: Record<string, unknown>[];

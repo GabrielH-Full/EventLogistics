@@ -114,7 +114,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const password_hash = bcrypt.hashSync(password, 12);
+    const password_hash = await bcrypt.hash(password, 12);
     // Since display_name is required in the DB schema, we use username as fallback
     const display_name = req.body.display_name || username;
 
@@ -193,7 +193,7 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
 
     const isActiveParam = is_active !== undefined ? is_active : null;
     if (password) {
-      const password_hash = bcrypt.hashSync(password, 12);
+      const password_hash = await bcrypt.hash(password, 12); //bcrypt.hashSync(password, 12) - forma antiga;
       query = `UPDATE users SET username = $1, password_hash = $2, role = $3, display_name = $4, is_active = COALESCE($5, is_active), updated_at = now() WHERE user_id = $6 RETURNING *`;
       queryArgs = [username, password_hash, role, display_name, isActiveParam, id];
     } else {

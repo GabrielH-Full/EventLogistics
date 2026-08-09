@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import http from 'http';
 import { fetchPublicState } from './db';
+import { verifyToken } from './auth';
 
 let io: Server | null = null;
 
@@ -9,8 +10,17 @@ export function initSocket(httpServer: http.Server, corsOrigins: string[]): Serv
     cors: { origin: corsOrigins, credentials: true }
   });
 
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) return next(new Error('Authentication required'));
+    try {
+      socket.data.user = verifyToken(token);
+      next();
+    } catch { next(new Error('Invalid token')); }
+  });
+
   io.on('connection', async (socket) => {
-    const stallId = socket.handshake.query.stallId;
+    const stallId = socket.data.user?.stallId;
     if (stallId) {
       socket.join(`stall_${stallId}`);
     }
