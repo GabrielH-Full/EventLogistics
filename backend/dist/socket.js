@@ -5,13 +5,26 @@ exports.broadcastToStall = broadcastToStall;
 exports.broadcastState = broadcastState;
 const socket_io_1 = require("socket.io");
 const db_1 = require("./db");
+const auth_1 = require("./auth");
 let io = null;
 function initSocket(httpServer, corsOrigins) {
     io = new socket_io_1.Server(httpServer, {
         cors: { origin: corsOrigins, credentials: true }
     });
+    io.use((socket, next) => {
+        const token = socket.handshake.auth.token;
+        if (!token)
+            return next(new Error('Authentication required'));
+        try {
+            socket.data.user = (0, auth_1.verifyToken)(token);
+            next();
+        }
+        catch {
+            next(new Error('Invalid token'));
+        }
+    });
     io.on('connection', async (socket) => {
-        const stallId = socket.handshake.query.stallId;
+        const stallId = socket.data.user?.stallId;
         if (stallId) {
             socket.join(`stall_${stallId}`);
         }

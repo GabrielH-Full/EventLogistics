@@ -7,6 +7,8 @@ require("dotenv/config");
 const http_1 = __importDefault(require("http"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const helmet_1 = __importDefault(require("helmet"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const stateRoutes_1 = __importDefault(require("./routes/stateRoutes"));
 const ticketRoutes_1 = __importDefault(require("./routes/ticketRoutes"));
@@ -19,8 +21,16 @@ const socket_1 = require("./socket");
 const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
 const app = (0, express_1.default)();
+app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({ origin: CORS_ORIGIN, credentials: true }));
-app.use(express_1.default.json());
+app.use(express_1.default.json({ limit: '10kb' }));
+app.use(express_1.default.urlencoded({ extended: false, limit: '10kb' }));
+const loginLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 10, // limite de 10 tentativas por IP
+    message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' }
+});
+app.use('/api/auth/login', loginLimiter);
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/state', stateRoutes_1.default);

@@ -9,9 +9,12 @@ if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is missing.');
 }
 exports.db = new pg_1.Pool({
-    connectionString: process.env.DATABASE_URL ||
-        'postgres://eventlogistics:eventlogistics_secret@localhost:5433/eventlogistics_db'
+    connectionString: process.env.DATABASE_URL,
+    max: 20, // 10 atendentes + 5 operadores + 5 monitores
+    connectionTimeoutMillis: 5000, // 5 segundos para conectar
+    idleTimeoutMillis: 30000, // 30 segundos sem usar a conexão
 });
+exports.db.on('connect', client => client.query('SET statement_timeout = 10000')); // 10 segundos para executar uma query
 async function fetchPublicState() {
     const [products, stalls, tickets] = await Promise.all([
         exports.db.query(`
