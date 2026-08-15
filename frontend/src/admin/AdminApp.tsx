@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, LogOut, AlertCircle, Users, Store, Package } from 'lucide-react';
+import { LayoutDashboard, LogOut, AlertCircle, Users, Store, Package, BarChart3 } from 'lucide-react';
 import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import CentralDashboardView from '../components/CentralDashboardView';
 import StallDetailsView from '../components/StallDetailsView';
@@ -11,6 +11,7 @@ import { UsersPage, UserFormPage } from '../pages/admin/UsersPage';
 import { StallsPage, StallFormPage } from '../pages/admin/StallsPage';
 import { ProductsPage, ProductFormPage } from '../pages/admin/ProductsPage';
 import { AdminGuard } from '../components/admin/AdminGuard';
+import EstatisticasPage from './estatisticas/EstatisticasPage';
 
 /** Tela de detalhes de uma barraca específica, resolvida a partir do :stallId da URL. */
 function StallDetailsRoute({
@@ -76,37 +77,41 @@ export default function AdminApp() {
             </button>
             */} {/*button venda de ticket*/}
             <button
+              onClick={() => navigate('/admin/statistics')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${location.pathname.startsWith('/admin/statistics') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Estatísticas</span>
+            </button>
+            <button
               onClick={() => navigate('/admin/users')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                location.pathname.startsWith('/admin/users') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${location.pathname.startsWith('/admin/users') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
             >
               <Users className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Usuários</span>
             </button>
             <button
               onClick={() => navigate('/admin/stalls')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                location.pathname.startsWith('/admin/stalls') && !location.pathname.startsWith('/admin/stalls-old') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${location.pathname.startsWith('/admin/stalls') && !location.pathname.startsWith('/admin/stalls-old') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
             >
               <Store className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Barracas</span>
             </button>
             <button
               onClick={() => navigate('/admin/products')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                location.pathname.startsWith('/admin/products') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${location.pathname.startsWith('/admin/products') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
             >
               <Package className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Produtos</span>
             </button>
             <button
               onClick={() => navigate('/admin/dashboard')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                isDashboardArea && !location.pathname.startsWith('/admin/stalls') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${isDashboardArea && !location.pathname.startsWith('/admin/stalls') ? 'bg-[#0066ff] text-white shadow-sm' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Painel Geral</span>
@@ -166,6 +171,8 @@ export default function AdminApp() {
               <Route path="products" element={<ProductsPage />} />
               <Route path="products/new" element={<ProductFormPage mode="create" />} />
               <Route path="products/:id/edit" element={<ProductFormPage mode="edit" />} />
+
+              <Route path="statistics" element={<EstatisticasPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
