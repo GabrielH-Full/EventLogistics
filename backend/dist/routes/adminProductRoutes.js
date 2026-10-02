@@ -3,57 +3,33 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const middleware_1 = require("../middleware");
 const db_1 = require("../db");
-const socket_1 = require("../socket");
-const crypto_1 = require("crypto");
-const audit_1 = require("../audit");
+const repositories_1 = require("../repositories");
+const services_1 = require("../services");
+const DomainErrors_1 = require("../errors/DomainErrors");
 const router = (0, express_1.Router)();
 router.use(middleware_1.requireAuth);
 router.use(middleware_1.requireAdmin);
+const productRepo = new repositories_1.ProductRepository(db_1.db);
+const productService = new services_1.ProductService(productRepo);
 // GET /api/products
 router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
-        const is_active = req.query.is_active; // 'true' | 'false'
+        const is_active = req.query.is_active;
         const stall_id = req.query.stall_id;
-        const parent_type = req.query.parent_type; // 'food' | 'drink'
+        const parent_type = req.query.parent_type;
         const page = parseInt(req.query.page || '1', 10);
         const limit = parseInt(req.query.limit || '10', 10);
-        const offset = (page - 1) * limit;
-        let queryArgs = [];
-        let whereClauses = [];
-        if (search) {
-            whereClauses.push(`LOWER(p.name) LIKE LOWER($${queryArgs.length + 1})`);
-            queryArgs.push(`%${search}%`);
-        }
-        if (is_active && (is_active === 'true' || is_active === 'false')) {
-            whereClauses.push(`p.is_active = $${queryArgs.length + 1}`);
-            queryArgs.push(is_active === 'true');
-        }
-        if (stall_id) {
-            whereClauses.push(`p.stall_id = $${queryArgs.length + 1}`);
-            queryArgs.push(stall_id);
-        }
-        if (parent_type) {
-            whereClauses.push(`c.parent_type = $${queryArgs.length + 1}`);
-            queryArgs.push(parent_type);
-        }
-        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-        const joinString = parent_type ? `LEFT JOIN product_categories c ON p.category_id = c.category_id` : '';
-        const countResult = await db_1.db.query(`SELECT COUNT(*) FROM products p ${joinString} ${whereString}`, queryArgs);
-        const total = parseInt(countResult.rows[0].count, 10);
-        let listQueryArgs = [...queryArgs];
-        listQueryArgs.push(limit);
-        listQueryArgs.push(offset);
-        const limitIdx = listQueryArgs.length - 1;
-        const offsetIdx = listQueryArgs.length;
-        const dataResult = await db_1.db.query(`SELECT p.product_id as id, p.*, s.name as stall_name, c.name as subcategory_name, c.parent_type
-       FROM products p 
-       LEFT JOIN stalls s ON p.stall_id = s.stall_id
-       LEFT JOIN product_categories c ON p.category_id = c.category_id
-       ${whereString}
-       ORDER BY p.created_at DESC
-       LIMIT $${limitIdx} OFFSET $${offsetIdx}`, listQueryArgs);
-        res.json({ data: dataResult.rows, total, page, limit });
+        const isActiveBool = is_active !== undefined ? (is_active === 'true') : undefined;
+        const result = await productService.listProducts({
+            search,
+            isActive: isActiveBool,
+            stallId: stall_id,
+            category: parent_type,
+            page,
+            limit
+        });
+        res.json(result);
     }
     catch (err) {
         console.error('Error fetching products:', err);
@@ -63,36 +39,21 @@ router.get('/', async (req, res) => {
 // POST /api/products
 router.post('/', async (req, res) => {
     const { name, stall_id, category_id, price, is_active = true } = req.body;
-    if (!name || !stall_id || !category_id || price === undefined) {
-        res.status(400).json({ error: 'Campos name, stall_id, category_id, price são obrigatórios.' });
-        return;
-    }
-    if (typeof price !== 'number' || price <= 0 || isNaN(price)) {
-        res.status(400).json({ error: 'Preço inválido — deve ser um número positivo.' });
-        return;
-    }
     try {
-        const product_id = (0, crypto_1.randomUUID)();
-        // Default mock data for legacy text constraints
-        const categoryText = 'Salgados'; // temporary mock for old constraint CHECK(category IN ('Salgados', 'Doces', 'Bebidas'))
-        const maxStock = 100;
-        const unit = 'un';
-        const image = 'food.png';
-        const insertResult = await db_1.db.query(`INSERT INTO products 
-      (product_id, stall_id, category_id, name, price, is_active, updated_at, stock, max_stock, unit, image, category) 
-      VALUES ($1, $2, $3, $4, $5, $6, now(), $7, $8, $9, $10, $11) RETURNING *`, [product_id, stall_id, category_id, name, price, is_active, 0, maxStock, unit, image, categoryText]);
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'PRODUCT_CREATED',
-            entityType: 'products',
-            entityId: product_id,
-            before: null,
-            after: insertResult.rows[0],
-        });
-        (0, socket_1.broadcastState)();
-        res.json({ data: insertResult.rows[0], message: 'Produto criado.' });
+        const created = await productService.createProduct({
+            name,
+            stallId: stall_id,
+            categoryId: category_id,
+            price,
+            isActive: is_active
+        }, req.user);
+        res.json({ data: created, message: 'Produto criado.' });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.ValidationError) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
         console.error('Error creating product:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -101,19 +62,14 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await db_1.db.query(`
-       SELECT p.*, s.name as stall_name, c.name as subcategory_name, c.parent_type
-       FROM products p 
-       LEFT JOIN stalls s ON p.stall_id = s.stall_id
-       LEFT JOIN product_categories c ON p.category_id = c.category_id
-       WHERE p.product_id = $1`, [id]);
-        if (result.rows.length === 0) {
-            res.status(404).json({ error: 'Produto não encontrado.' });
-            return;
-        }
-        res.json({ data: result.rows[0] });
+        const data = await productService.getProductById(id);
+        res.json({ data });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error fetching product:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -122,30 +78,25 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { name, stall_id, category_id, price, is_active = true } = req.body;
-    if (typeof price !== 'number' || price <= 0 || isNaN(price)) {
-        res.status(400).json({ error: 'Preço inválido — deve ser um número positivo.' });
-        return;
-    }
     try {
-        const result = await db_1.db.query(`UPDATE products 
-       SET name=$1, stall_id=$2, category_id=$3, price=$4, is_active=$5, updated_at=now() 
-       WHERE product_id=$6 RETURNING *`, [name, stall_id, category_id, price, is_active, id]);
-        if (result.rows.length === 0) {
-            res.status(404).json({ error: 'Produto não encontrado.' });
-            return;
-        }
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'PRODUCT_UPDATED',
-            entityType: 'products',
-            entityId: id,
-            before: null,
-            after: result.rows[0],
-        });
-        (0, socket_1.broadcastState)();
-        res.json({ data: result.rows[0], message: 'Produto atualizado.' });
+        const updated = await productService.updateProduct(id, {
+            name,
+            stallId: stall_id,
+            categoryId: category_id,
+            price,
+            isActive: is_active
+        }, req.user);
+        res.json({ data: updated, message: 'Produto atualizado.' });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.ValidationError) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error updating product:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -154,25 +105,14 @@ router.put('/:id', async (req, res) => {
 router.patch('/:id/status', async (req, res) => {
     const { id } = req.params;
     try {
-        const checkResult = await db_1.db.query('SELECT is_active FROM products WHERE product_id = $1', [id]);
-        if (checkResult.rows.length === 0) {
-            res.status(404).json({ error: 'Produto não encontrado.' });
-            return;
-        }
-        const current = checkResult.rows[0].is_active;
-        const result = await db_1.db.query('UPDATE products SET is_active=$1, updated_at=now() WHERE product_id=$2 RETURNING *', [!current, id]);
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'PRODUCT_UPDATED',
-            entityType: 'products',
-            entityId: id,
-            before: { is_active: current },
-            after: result.rows[0],
-        });
-        (0, socket_1.broadcastState)();
-        res.json({ data: result.rows[0], message: 'Status atualizado.' });
+        const updated = await productService.toggleProductStatus(id, req.user);
+        res.json({ data: updated, message: 'Status atualizado.' });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error patching product:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -181,28 +121,18 @@ router.patch('/:id/status', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const checkResult = await db_1.db.query('SELECT COUNT(*) FROM ticket_items WHERE product_id = $1', [id]);
-        if (parseInt(checkResult.rows[0].count, 10) > 0) {
-            res.status(409).json({ error: 'Não é possível excluir produto com histórico de vendas (tickets). Desative o produto.' });
-            return;
-        }
-        const deleteResult = await db_1.db.query('DELETE FROM products WHERE product_id = $1 RETURNING *', [id]);
-        if (deleteResult.rows.length === 0) {
-            res.status(404).json({ error: 'Produto não encontrado.' });
-            return;
-        }
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'PRODUCT_DELETED',
-            entityType: 'products',
-            entityId: id,
-            before: deleteResult.rows[0],
-            after: null,
-        });
-        (0, socket_1.broadcastState)();
+        await productService.deleteProduct(id, req.user);
         res.json({ message: 'Produto excluído.' });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.ConflictError) {
+            res.status(409).json({ error: err.message });
+            return;
+        }
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error deleting product:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }

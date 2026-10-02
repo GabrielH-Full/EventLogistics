@@ -3,53 +3,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const middleware_1 = require("../middleware");
 const db_1 = require("../db");
-const socket_1 = require("../socket");
-const crypto_1 = require("crypto");
-const audit_1 = require("../audit");
+const repositories_1 = require("../repositories");
+const services_1 = require("../services");
+const DomainErrors_1 = require("../errors/DomainErrors");
 const router = (0, express_1.Router)();
 router.use(middleware_1.requireAuth);
 router.use(middleware_1.requireAdmin);
+const stallRepo = new repositories_1.StallRepository(db_1.db);
+const productRepo = new repositories_1.ProductRepository(db_1.db);
+const stallService = new services_1.StallService(db_1.db, stallRepo, productRepo);
 // GET /api/stalls
 router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
-        const is_active = req.query.is_active; // 'true' | 'false'
-        const type = req.query.type;
+        const is_active = req.query.is_active;
         const page = parseInt(req.query.page || '1', 10);
         const limit = parseInt(req.query.limit || '10', 10);
-        const offset = (page - 1) * limit;
-        let queryArgs = [];
-        let whereClauses = [];
-        if (search) {
-            whereClauses.push(`LOWER(name) LIKE LOWER($${queryArgs.length + 1})`);
-            queryArgs.push(`%${search}%`);
-        }
-        if (is_active && (is_active === 'true' || is_active === 'false')) {
-            whereClauses.push(`is_active = $${queryArgs.length + 1}`);
-            queryArgs.push(is_active === 'true');
-        }
-        if (type) {
-            whereClauses.push(`type = $${queryArgs.length + 1}`);
-            queryArgs.push(type);
-        }
-        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-        const countResult = await db_1.db.query(`SELECT COUNT(*) FROM stalls ${whereString}`, queryArgs);
-        const total = parseInt(countResult.rows[0].count, 10);
-        let listQueryArgs = [...queryArgs];
-        listQueryArgs.push(limit);
-        listQueryArgs.push(offset);
-        const limitIdx = listQueryArgs.length - 1;
-        const offsetIdx = listQueryArgs.length;
-        const dataResult = await db_1.db.query(`SELECT stall_id as id, stall_id, name, icon, type, is_active, created_at, updated_at 
-       FROM stalls ${whereString} 
-       ORDER BY created_at DESC 
-       LIMIT $${limitIdx} OFFSET $${offsetIdx}`, listQueryArgs);
-        res.json({
-            data: dataResult.rows,
-            total,
+        const isActiveBool = is_active !== undefined ? (is_active === 'true') : undefined;
+        const result = await stallService.listStalls({
+            search,
+            isActive: isActiveBool,
             page,
             limit
         });
+        res.json(result);
     }
     catch (err) {
         console.error('Error fetching stalls:', err);
@@ -59,33 +36,21 @@ router.get('/', async (req, res) => {
 // POST /api/stalls
 router.post('/', async (req, res) => {
     const { name, type, is_active = true, user_ids = [], icon = 'Store' } = req.body;
-    if (!name || !type) {
-        res.status(400).json({ error: 'Campos name e type são obrigatórios.' });
-        return;
-    }
     try {
-        await db_1.db.query('BEGIN');
-        const stall_id = (0, crypto_1.randomUUID)(); // Since we use TEXT for stall_id
-        const insertResult = await db_1.db.query(`INSERT INTO stalls (stall_id, name, type, icon, is_active, updated_at) 
-       VALUES ($1, $2, $3, $4, $5, now()) RETURNING *`, [stall_id, name, type, icon, is_active]);
-        const newStall = insertResult.rows[0];
-        for (const userId of user_ids) {
-            await db_1.db.query('INSERT INTO stall_users (stall_id, user_id) VALUES ($1, $2)', [stall_id, userId]);
-        }
-        await db_1.db.query('COMMIT');
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'STALL_CREATED',
-            entityType: 'stalls',
-            entityId: stall_id,
-            before: null,
-            after: newStall,
-        });
-        (0, socket_1.broadcastState)();
+        const newStall = await stallService.createStall({
+            name,
+            type,
+            isActive: is_active,
+            userIds: user_ids,
+            icon
+        }, req.user);
         res.json({ data: newStall, message: 'Barraca criada.' });
     }
     catch (err) {
-        await db_1.db.query('ROLLBACK');
+        if (err instanceof DomainErrors_1.ValidationError) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
         console.error('Error creating stall:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -94,17 +59,14 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const stallResult = await db_1.db.query('SELECT * FROM stalls WHERE stall_id = $1', [id]);
-        if (stallResult.rows.length === 0) {
-            res.status(404).json({ error: 'Barraca não encontrada.' });
-            return;
-        }
-        const stall = stallResult.rows[0];
-        const usersResult = await db_1.db.query('SELECT user_id FROM stall_users WHERE stall_id = $1', [id]);
-        const userIds = usersResult.rows.map((r) => r.user_id);
-        res.json({ data: { ...stall, user_ids: userIds } });
+        const data = await stallService.getStallById(id);
+        res.json({ data });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error fetching stall:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -113,37 +75,25 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { name, type, is_active, user_ids = [], icon = 'Store' } = req.body;
-    if (!name || !type) {
-        res.status(400).json({ error: 'Campos name e type são obrigatórios.' });
-        return;
-    }
     try {
-        const isActiveParam = is_active !== undefined ? is_active : null;
-        await db_1.db.query('BEGIN');
-        const updateResult = await db_1.db.query(`UPDATE stalls SET name = $1, type = $2, icon = $3, is_active = COALESCE($4, is_active), updated_at = now() WHERE stall_id = $5 RETURNING *`, [name, type, icon, isActiveParam, id]);
-        if (updateResult.rows.length === 0) {
-            await db_1.db.query('ROLLBACK');
-            res.status(404).json({ error: 'Barraca não encontrada.' });
-            return;
-        }
-        await db_1.db.query('DELETE FROM stall_users WHERE stall_id = $1', [id]);
-        for (const userId of user_ids) {
-            await db_1.db.query('INSERT INTO stall_users (stall_id, user_id) VALUES ($1, $2)', [id, userId]);
-        }
-        await db_1.db.query('COMMIT');
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'STALL_UPDATED',
-            entityType: 'stalls',
-            entityId: id,
-            before: null,
-            after: updateResult.rows[0],
-        });
-        (0, socket_1.broadcastState)();
-        res.json({ data: updateResult.rows[0], message: 'Barraca atualizada.' });
+        const updated = await stallService.updateStall(id, {
+            name,
+            type,
+            isActive: is_active,
+            userIds: user_ids,
+            icon
+        }, req.user);
+        res.json({ data: updated, message: 'Barraca atualizada.' });
     }
     catch (err) {
-        await db_1.db.query('ROLLBACK');
+        if (err instanceof DomainErrors_1.ValidationError) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error updating stall:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -152,25 +102,14 @@ router.put('/:id', async (req, res) => {
 router.patch('/:id/status', async (req, res) => {
     const { id } = req.params;
     try {
-        const checkResult = await db_1.db.query('SELECT is_active FROM stalls WHERE stall_id = $1', [id]);
-        if (checkResult.rows.length === 0) {
-            res.status(404).json({ error: 'Barraca não encontrada.' });
-            return;
-        }
-        const current = checkResult.rows[0].is_active;
-        const updateResult = await db_1.db.query('UPDATE stalls SET is_active = $1, updated_at = now() WHERE stall_id = $2 RETURNING *', [!current, id]);
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'STALL_UPDATED',
-            entityType: 'stalls',
-            entityId: id,
-            before: { is_active: current },
-            after: updateResult.rows[0],
-        });
-        (0, socket_1.broadcastState)();
-        res.json({ data: updateResult.rows[0], message: 'Status atualizado.' });
+        const updated = await stallService.toggleStallStatus(id, req.user);
+        res.json({ data: updated, message: 'Status atualizado.' });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error patching stall:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
@@ -179,30 +118,18 @@ router.patch('/:id/status', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        // 409 check for products or tickets/orders. 
-        // We will check if it has products linked
-        const productsResult = await db_1.db.query('SELECT COUNT(*) FROM products WHERE stall_id = $1', [id]);
-        if (parseInt(productsResult.rows[0].count, 10) > 0) {
-            res.status(409).json({ error: 'Não é possível excluir barraca com produtos cadastrados. Desative a barraca.' });
-            return;
-        }
-        const deleteResult = await db_1.db.query('DELETE FROM stalls WHERE stall_id = $1 RETURNING *', [id]);
-        if (deleteResult.rows.length === 0) {
-            res.status(404).json({ error: 'Barraca não encontrada.' });
-            return;
-        }
-        (0, audit_1.logAudit)({
-            userId: req.user.sub,
-            action: 'STALL_DELETED',
-            entityType: 'stalls',
-            entityId: id,
-            before: deleteResult.rows[0],
-            after: null,
-        });
-        (0, socket_1.broadcastState)();
+        await stallService.deleteStall(id, req.user);
         res.json({ message: 'Barraca excluída.' });
     }
     catch (err) {
+        if (err instanceof DomainErrors_1.ConflictError) {
+            res.status(409).json({ error: err.message });
+            return;
+        }
+        if (err instanceof DomainErrors_1.NotFoundError) {
+            res.status(404).json({ error: err.message });
+            return;
+        }
         console.error('Error deleting stall:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
